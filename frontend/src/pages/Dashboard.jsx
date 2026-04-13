@@ -1,77 +1,257 @@
-import { Link } from "react-router-dom";
-import Layout from "../components/Layout.jsx";
-import StatCard from "../components/StatCard.jsx";
-import { apiFetch } from "../lib/api.js";
-import { getUser } from "../lib/auth";
 import { useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../lib/api.js";
+import { getUser } from "../lib/auth.js";
+import { Bar, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Boxes, Download, TrendingUp, TriangleAlert } from "lucide-react";
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
+
+function Card({ icon: Icon, color, value, label, hint }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className={`h-10 w-10 rounded-2xl ${color} text-white flex items-center justify-center`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <div className="text-2xl font-semibold tracking-tight">{value}</div>
+          <div className="text-sm text-slate-600">{label}</div>
+          {hint ? <div className="text-xs text-slate-500">{hint}</div> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Panel({ title, children }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="text-sm font-semibold">{title}</div>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const user = getUser();
+  const isGuru = user?.role === "GURU";
+
+  const [summary, setSummary] = useState(null);
+  const [trends, setTrends] = useState([]);
+  const [stockByCategory, setStockByCategory] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [items, setItems] = useState([]);
   const [loans, setLoans] = useState([]);
+  const [requests, setRequests] = useState([]);
   const [error, setError] = useState("");
 
   async function load() {
     setError("");
     try {
-      const [i, l] = await Promise.all([apiFetch("/api/items"), apiFetch("/api/loans")]);
+      if (isGuru) {
+        const [l, r] = await Promise.all([apiFetch("/api/loans"), apiFetch("/api/requests?mine=1")]);
+        setLoans(l.data);
+        setRequests(r.data);
+        return;
+      }
+
+      const [s, t, b, a, i] = await Promise.all([
+        apiFetch("/api/dashboard/summary"),
+        apiFetch("/api/dashboard/trends"),
+        apiFetch("/api/dashboard/stock-by-category"),
+        apiFetch("/api/dashboard/recent-activity"),
+        apiFetch("/api/items"),
+      ]);
+      setSummary(s.data);
+      setTrends(t.data);
+      setStockByCategory(b.data);
+      setActivity(a.data);
       setItems(i.data);
-      setLoans(l.data);
     } catch (e) {
-      setError(e?.message || "Gagal memuat ringkasan");
+      setError(e?.message || "Gagal memuat dashboard");
     }
   }
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const lowStock = useMemo(
-    () => items.filter((x) => (x.minStock || 0) > 0 && x.stock <= x.minStock).length,
+  const lowStockList = useMemo(
+    () => items.filter((x) => (x.minStock || 0) > 0 && x.stock <= x.minStock).slice(0, 6),
     [items],
   );
 
-  const pendingLoans = useMemo(() => loans.filter((x) => x.status === "PENDING").length, [loans]);
+  if (isGuru) {
+    const activeLoans = loans.filter((x) => x.status === "APPROVED").length;
+    const processingRequests = requests.filter((x) => x.status === "PENDING" || x.status === "APPROVED").length;
+    const totalHistory = loans.length + requests.length;
+
+    return (
+      <div className="max-w-6xl">
+        <div className="mb-1 text-2xl font-semibold">Dashboard</div>
+        <div className="text-sm text-slate-600">Ringkasan peminjaman dan permintaan barang</div>
+        {error ? <div className="mt-3 text-sm text-rose-700">{error}</div> : null}
+
+        <div className="mt-5 grid md:grid-cols-3 gap-4">
+          <Card icon={Boxes} color="bg-slate-900" value={activeLoans} label="Peminjaman Aktif" hint="Sedang dipinjam" />
+          <Card
+            icon={TrendingUp}
+            color="bg-amber-500"
+            value={processingRequests}
+            label="Permintaan Diproses"
+            hint="Menunggu/Disetujui"
+          />
+          <Card icon={Download} color="bg-emerald-600" value={totalHistory} label="Riwayat" hint="Total permintaan & peminjaman" />
+        </div>
+
+        <div className="mt-5">
+          <Panel title="Peminjaman Aktif">
+            <div className="space-y-2">
+              {loans
+                .filter((x) => x.status === "APPROVED")
+                .slice(0, 6)
+                .map((x) => (
+                  <div key={x.id} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2">
+                    <div className="text-sm">
+                      <div className="font-medium">{x.lines?.[0]?.item?.name || "Peminjaman"}</div>
+                      <div className="text-xs text-slate-500">Diajukan: {new Date(x.requestedAt).toLocaleDateString()}</div>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700 ring-1 ring-emerald-200">
+                      Aktif
+                    </span>
+                  </div>
+                ))}
+              {!loans.some((x) => x.status === "APPROVED") ? (
+                <div className="text-sm text-slate-500">Belum ada peminjaman aktif.</div>
+              ) : null}
+            </div>
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+
+  const trendLabels = trends.map((x) => x.bucket);
+  const lineData = {
+    labels: trendLabels,
+    datasets: [
+      {
+        label: "Barang Masuk",
+        data: trends.map((x) => x.inboundQty),
+        borderColor: "#f59e0b",
+        backgroundColor: "rgba(245, 158, 11, 0.15)",
+        tension: 0.35,
+      },
+      {
+        label: "Barang Keluar",
+        data: trends.map((x) => x.outboundQty),
+        borderColor: "#22c55e",
+        backgroundColor: "rgba(34, 197, 94, 0.15)",
+        tension: 0.35,
+      },
+    ],
+  };
+
+  const barData = {
+    labels: stockByCategory.map((x) => x.categoryName),
+    datasets: [
+      {
+        label: "Stok",
+        data: stockByCategory.map((x) => x.stock),
+        backgroundColor: "#3b82f6",
+        borderRadius: 10,
+      },
+    ],
+  };
 
   return (
-    <Layout
-      title={`Halo, ${user?.name || "Pengguna"}`}
-      subtitle="Ringkasan inventaris hari ini."
-      actions={
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
-          Refresh
-        </button>
-      }
-    >
-      {error ? <div className="mb-3 text-sm text-red-600">{error}</div> : null}
+    <div className="max-w-6xl">
+      <div className="mb-1 text-2xl font-semibold">Dashboard</div>
+      <div className="text-sm text-slate-600">Ringkasan inventaris dan aktivitas terkini</div>
+      {error ? <div className="mt-3 text-sm text-rose-700">{error}</div> : null}
 
-      <div className="grid md:grid-cols-3 gap-3">
-        <StatCard label="Total Barang" value={items.length} hint="Jumlah item terdaftar" />
-        <StatCard
+      <div className="mt-5 grid md:grid-cols-4 gap-4">
+        <Card icon={Boxes} color="bg-blue-600" value={summary?.totalItems ?? "-"} label="Total Barang" hint="Semua item" />
+        <Card icon={TrendingUp} color="bg-emerald-600" value={summary?.inboundThisMonthQty ?? "-"} label="Barang Masuk" hint="Bulan ini" />
+        <Card icon={Download} color="bg-orange-500" value={summary?.outboundThisMonthQty ?? "-"} label="Barang Keluar" hint="Bulan ini" />
+        <Card
+          icon={TriangleAlert}
+          color="bg-rose-600"
+          value={summary?.lowStockItems ?? "-"}
           label="Stok Menipis"
-          value={lowStock}
-          hint="Perlu pengadaan/monitor"
-          accent="from-rose-600 to-orange-500"
-        />
-        <StatCard
-          label="Peminjaman Pending"
-          value={pendingLoans}
-          hint={user?.role === "GURU" ? "Menunggu diproses TU" : "Perlu ditindaklanjuti"}
-          accent="from-amber-500 to-yellow-300"
+          hint="Perlu restok"
         />
       </div>
 
-      <div className="mt-4 grid md:grid-cols-2 gap-4">
-        <Link className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50" to="/master/items">
-          <div className="font-semibold">Stok & Master Barang</div>
-          <div className="text-sm text-slate-600">Cari barang, cek stok, dan cetak laporan sederhana.</div>
-        </Link>
-        <Link className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:bg-slate-50" to="/loans">
-          <div className="font-semibold">Peminjaman</div>
-          <div className="text-sm text-slate-600">Ajukan, approve, dan catat pengembalian secara transparan.</div>
-        </Link>
+      <div className="mt-5 grid lg:grid-cols-2 gap-4">
+        <Panel title="Trend Barang Masuk & Keluar">
+          <Line data={lineData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+        </Panel>
+        <Panel title="Stok per Kategori">
+          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+        </Panel>
       </div>
-    </Layout>
+
+      <div className="mt-5 grid lg:grid-cols-2 gap-4">
+        <Panel title="Aktivitas Terbaru">
+          <div className="space-y-2">
+            {activity.slice(0, 6).map((a, idx) => (
+              <div key={idx} className="rounded-xl border border-slate-200 px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">
+                    {a.type === "INBOUND" ? "Barang Masuk" : a.type === "OUTBOUND" ? "Barang Keluar" : "Peminjaman"}
+                  </div>
+                  <div className="text-xs text-slate-500">{new Date(a.at).toLocaleString()}</div>
+                </div>
+                <div className="mt-1 text-xs text-slate-600">
+                  {(a.items || []).slice(0, 1).map((it) => (
+                    <span key={it.name}>
+                      {it.name} × {it.qty}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {!activity.length ? <div className="text-sm text-slate-500">Belum ada aktivitas.</div> : null}
+          </div>
+        </Panel>
+
+        <Panel title="Stok Menipis">
+          <div className="space-y-2">
+            {lowStockList.map((it) => (
+              <div key={it.id} className="rounded-xl border border-slate-200 px-3 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium">{it.name}</div>
+                  <div className="text-xs text-rose-700">
+                    {it.stock} / min: {it.minStock}
+                  </div>
+                </div>
+                <div className="mt-2 h-2 w-full rounded-full bg-rose-100">
+                  <div
+                    className="h-2 rounded-full bg-rose-500"
+                    style={{
+                      width: `${Math.min(100, Math.round((it.stock / Math.max(1, it.minStock)) * 100))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+            {!lowStockList.length ? <div className="text-sm text-slate-500">Stok aman.</div> : null}
+          </div>
+        </Panel>
+      </div>
+    </div>
   );
 }
 
