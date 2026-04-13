@@ -10,6 +10,8 @@ import { categoriesRouter } from "./routes/categories.js";
 import { suppliersRouter } from "./routes/suppliers.js";
 import { roomsRouter } from "./routes/rooms.js";
 import { itemsRouter } from "./routes/items.js";
+import { inboundRouter } from "./routes/inbound.js";
+import { outboundRouter } from "./routes/outbound.js";
 
 requireEnv();
 
@@ -34,6 +36,8 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/suppliers", suppliersRouter);
 app.use("/api/rooms", roomsRouter);
 app.use("/api/items", itemsRouter);
+app.use("/api/inbound", inboundRouter);
+app.use("/api/outbound", outboundRouter);
 
 app.use(notFound);
 app.use(errorHandler);
