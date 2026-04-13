@@ -37,7 +37,8 @@ function getNav(role) {
   }
   return [
     ...common,
-    { to: "/master/items", label: "Master Barang", description: "Barang, kategori, ruangan" },
+    { to: "/master/items", label: "Master Barang", description: "Barang & stok" },
+    { to: "/master", label: "Master Data", description: "Kategori, ruangan, supplier" },
     { to: "/transactions", label: "Transaksi", description: "Barang masuk & keluar" },
     { to: "/loans", label: "Peminjaman", description: "Approve & pengembalian" },
   ];

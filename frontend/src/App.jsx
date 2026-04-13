@@ -3,6 +3,7 @@ import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Items from "./pages/Items.jsx";
 import Loans from "./pages/Loans.jsx";
+import MasterData from "./pages/MasterData.jsx";
 import { getToken } from "./lib/api.js";
 
 function RequireAuth({ children }) {
@@ -36,6 +37,14 @@ export default function App() {
         element={
           <RequireAuth>
             <Loans />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/master"
+        element={
+          <RequireAuth>
+            <MasterData />
           </RequireAuth>
         }
       />
