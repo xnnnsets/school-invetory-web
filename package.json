@@ -1,0 +1,21 @@
+{
+  "name": "aplikasi_inventaris_sekolahan",
+  "version": "1.0.0",
+  "description": "Aplikasi inventaris sekolah berbasis web untuk membantu pengelolaan aset/barang secara terstruktur: barang masuk, barang keluar, stok real-time, dan peminjaman.",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm -w backend run dev\" \"npm -w frontend run dev\"",
+    "backend:dev": "npm -w backend run dev",
+    "frontend:dev": "npm -w frontend run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
