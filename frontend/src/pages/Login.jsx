@@ -98,7 +98,7 @@ export default function Login() {
 
           <button
             disabled={loading}
-            className="w-full bg-slate-900 text-white rounded-xl py-2 disabled:opacity-60 btn-border-reveal"
+            className="w-full bg-slate-900 text-white rounded-xl py-2 disabled:opacity-60"
             type="submit"
           >
             {loading ? "Memproses..." : "Masuk"}

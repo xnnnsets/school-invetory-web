@@ -26,7 +26,7 @@ function Item({ to, icon: Icon, label, badge }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
+        `border-reveal flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
           isActive ? "bg-slate-100 text-slate-900" : "text-slate-700 hover:bg-slate-50"
         }`
       }

@@ -92,32 +92,32 @@ body {
   margin: 0;
 }
 
-/* Border-reveal hover effect (apply per-button) */
-.btn-border-reveal {
+/* Border-reveal hover effect (apply per-element) */
+.border-reveal {
   position: relative;
   overflow: hidden;
 }
-.btn-border-reveal::after {
+.border-reveal::after {
   content: "";
   position: absolute;
   inset: 0;
   width: 0;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.06);
   transition: width 0.25s ease;
   z-index: 0;
 }
 @media (prefers-color-scheme: dark) {
-  .btn-border-reveal::after {
-    background: rgba(255, 255, 255, 0.08);
+  .border-reveal::after {
+    background: rgba(255, 255, 255, 0.06);
   }
 }
-.btn-border-reveal:hover::after {
+.border-reveal:hover::after {
   width: 100%;
 }
-.btn-border-reveal:disabled::after {
+.border-reveal:disabled::after {
   width: 0;
 }
-.btn-border-reveal > * {
+.border-reveal > * {
   position: relative;
   z-index: 1;
 }
