@@ -14,6 +14,8 @@ import { inboundRouter } from "./routes/inbound.js";
 import { outboundRouter } from "./routes/outbound.js";
 import { loansRouter } from "./routes/loans.js";
 import { dashboardRouter } from "./routes/dashboard.js";
+import { usersRouter } from "./routes/users.js";
+import { schoolRouter } from "./routes/school.js";
 
 requireEnv();
 
@@ -42,6 +44,8 @@ app.use("/api/inbound", inboundRouter);
 app.use("/api/outbound", outboundRouter);
 app.use("/api/loans", loansRouter);
 app.use("/api/dashboard", dashboardRouter);
+app.use("/api/users", usersRouter);
+app.use("/api/school", schoolRouter);
 
 app.use(notFound);
 app.use(errorHandler);
