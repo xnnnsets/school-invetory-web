@@ -50,3 +50,40 @@ itemsRouter.post(
   },
 );
 
+itemsRouter.put(
+  "/:id",
+  requireRole("ADMIN", "PETUGAS_TU"),
+  validate(
+    z.object({
+      params: z.object({ id: z.string().min(1) }),
+      body: z.object({
+        code: z.string().min(2).optional(),
+        name: z.string().min(2).optional(),
+        unit: z.string().min(1).optional(),
+        minStock: z.number().int().min(0).optional(),
+        description: z.string().optional().nullable(),
+        categoryId: z.string().min(1).optional(),
+        roomId: z.string().optional().nullable(),
+      }),
+    }),
+  ),
+  async (req, res) => {
+    const { id } = req.validated.params;
+    const b = req.validated.body;
+    const row = await prisma.item.update({
+      where: { id },
+      data: {
+        ...(b.code !== undefined ? { code: b.code } : null),
+        ...(b.name !== undefined ? { name: b.name } : null),
+        ...(b.unit !== undefined ? { unit: b.unit } : null),
+        ...(b.minStock !== undefined ? { minStock: b.minStock } : null),
+        ...(b.description !== undefined ? { description: b.description } : null),
+        ...(b.categoryId !== undefined ? { categoryId: b.categoryId } : null),
+        ...(b.roomId !== undefined ? { roomId: b.roomId } : null),
+      },
+      include: { category: true, room: true },
+    });
+    res.json({ data: row });
+  },
+);
+

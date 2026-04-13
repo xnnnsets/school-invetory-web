@@ -10,7 +10,15 @@ export const outboundRouter = Router();
 outboundRouter.use(requireAuth, requireRole("ADMIN", "PETUGAS_TU"));
 
 outboundRouter.get("/", async (req, res) => {
+  const { from, to } = req.query;
+  const where = {};
+  if (from || to) {
+    where.date = {};
+    if (from) where.date.gte = new Date(String(from));
+    if (to) where.date.lte = new Date(String(to));
+  }
   const rows = await prisma.outbound.findMany({
+    where,
     orderBy: { date: "desc" },
     include: { lines: { include: { item: true } } },
   });
