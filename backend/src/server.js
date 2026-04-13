@@ -6,6 +6,10 @@ import morgan from "morgan";
 import { env, requireEnv } from "./env.js";
 import { errorHandler, notFound } from "./http/errors.js";
 import { authRouter } from "./routes/auth.js";
+import { categoriesRouter } from "./routes/categories.js";
+import { suppliersRouter } from "./routes/suppliers.js";
+import { roomsRouter } from "./routes/rooms.js";
+import { itemsRouter } from "./routes/items.js";
 
 requireEnv();
 
@@ -26,6 +30,10 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/categories", categoriesRouter);
+app.use("/api/suppliers", suppliersRouter);
+app.use("/api/rooms", roomsRouter);
+app.use("/api/items", itemsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
