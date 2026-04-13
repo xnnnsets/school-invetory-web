@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+import { Box, Pencil, Plus, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
 import { ModalPanel, Page } from "../components/Motion.jsx";
