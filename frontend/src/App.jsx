@@ -15,6 +15,7 @@ import Reports from "./pages/Reports.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Users from "./pages/Users.jsx";
 import School from "./pages/School.jsx";
+import UpdateStock from "./pages/UpdateStock.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -74,7 +75,7 @@ export default function App() {
         <Route path="notifications" element={<Notifications />} />
 
         {/* TU */}
-        <Route path="update-stock" element={<MasterData />} />
+        <Route path="update-stock" element={<UpdateStock />} />
 
         {/* Reports */}
         <Route path="reports" element={<Reports />} />
