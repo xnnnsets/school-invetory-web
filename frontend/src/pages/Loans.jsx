@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import Layout from "../components/Layout.jsx";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
+import { ModalPanel } from "../components/Motion.jsx";
+import { Plus, RefreshCw, X } from "lucide-react";
 
 function statusPill(status) {
   const map = {
@@ -99,38 +100,34 @@ export default function Loans() {
   }
 
   return (
-    <Layout
-      title="Peminjaman Barang"
-      subtitle={isGuru ? "Ajukan pinjam barang dan pantau statusnya." : "Proses persetujuan dan pengembalian peminjaman."}
-      actions={
-        <>
-          <button
-            className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
-            onClick={() => window.print()}
-          >
-            Cetak
+    <div className="max-w-6xl">
+      <div className="mb-1 text-2xl font-semibold">{isGuru ? "Pinjam Barang" : "Peminjaman Barang"}</div>
+      <div className="text-sm text-slate-600">
+        {isGuru ? "Ajukan pinjam barang dan pantau statusnya." : "Proses persetujuan dan pengembalian peminjaman."}
+      </div>
+
+      <div className="mt-5 flex flex-col md:flex-row gap-2">
+        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => window.print()}>
+          Cetak
+        </button>
+        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
+          <span className="inline-flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </span>
+        </button>
+        {isGuru ? (
+          <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800" onClick={() => setOpen(true)}>
+            <span className="inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" /> Ajukan
+            </span>
           </button>
-          {isGuru ? (
-            <button
-              className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800"
-              onClick={() => setOpen(true)}
-            >
-              + Ajukan Peminjaman
-            </button>
-          ) : null}
-        </>
-      }
-    >
-      <div className="flex gap-2 items-center">
+        ) : null}
         <input
           className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
           placeholder="Cari nama peminjam / status / barang..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
-          Refresh
-        </button>
       </div>
 
       {error ? <div className="mt-3 text-sm text-red-600">{error}</div> : null}
@@ -221,16 +218,17 @@ export default function Loans() {
 
       {open ? (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-semibold">Ajukan Peminjaman</div>
-                <div className="text-sm text-slate-600">Pilih barang dan jumlah yang dibutuhkan.</div>
+          <ModalPanel>
+            <div className="w-full max-w-xl rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-lg font-semibold">Ajukan Peminjaman</div>
+                  <div className="text-sm text-slate-600">Pilih barang dan jumlah yang dibutuhkan.</div>
+                </div>
+                <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)} aria-label="Tutup">
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)}>
-                ✕
-              </button>
-            </div>
 
             <div className="mt-4 space-y-3">
               {lines.map((ln, idx) => (
@@ -299,9 +297,10 @@ export default function Loans() {
               </button>
             </div>
           </div>
+          </ModalPanel>
         </div>
       ) : null}
-    </Layout>
+    </div>
   );
 }
 

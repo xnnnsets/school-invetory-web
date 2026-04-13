@@ -9,6 +9,8 @@ import Transactions from "./pages/Transactions.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import Categories from "./pages/Categories.jsx";
 import Suppliers from "./pages/Suppliers.jsx";
+import Requests from "./pages/Requests.jsx";
+import History from "./pages/History.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -60,8 +62,8 @@ export default function App() {
 
         {/* Loans/Requests */}
         <Route path="loans" element={<Loans />} />
-        <Route path="requests" element={<Placeholder title="Ajukan Permintaan" subtitle="Permintaan barang ke TU." />} />
-        <Route path="history" element={<Placeholder title="Riwayat" subtitle="Riwayat permintaan & peminjaman." />} />
+        <Route path="requests" element={<Requests />} />
+        <Route path="history" element={<History />} />
 
         {/* Kepsek */}
         <Route path="stock-monitoring" element={<Items />} />
