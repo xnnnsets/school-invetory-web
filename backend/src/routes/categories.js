@@ -9,7 +9,10 @@ export const categoriesRouter = Router();
 categoriesRouter.use(requireAuth);
 
 categoriesRouter.get("/", async (req, res) => {
-  const rows = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const rows = await prisma.category.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { items: true } } },
+  });
   res.json({ data: rows });
 });
 
