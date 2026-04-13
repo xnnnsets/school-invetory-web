@@ -256,7 +256,19 @@ Minimal ENV backend di Railway:
 - `PORT` (Railway biasanya otomatis, tapi backend sudah membaca `PORT`)
 - `CLIENT_ORIGIN` (URL frontend)
 
-Frontend:
-- Kalau kamu host frontend terpisah (domain lain), set `VITE_API_BASE` ke URL backend (mis. `https://xxx.up.railway.app`)
+Frontend (2 opsi):
+
+- **Opsi A (disarankan untuk Railway, paling simpel)**: frontend panggil backend via URL publik
+  - Set `VITE_API_BASE` ke URL backend (mis. `https://inventaris-backend-xxx.up.railway.app`)
+  - Tidak perlu nginx proxy `/api`
+
+- **Opsi B (pakai Docker nginx + proxy /api)**: frontend dan backend tetap beda service, tapi nginx proxy ke backend
+  - Set env di service frontend:
+    - `PORT` (Railway akan set otomatis; nginx akan ikut)
+    - `API_UPSTREAM` = URL backend kamu, contoh: `https://inventaris-backend-xxx.up.railway.app`
+  - Pastikan backend mengizinkan CORS ke domain frontend (`CLIENT_ORIGIN`)
+
+Catatan penting:
+- **Jangan taruh** `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN` di service frontend. Itu khusus backend.
 
 
