@@ -268,6 +268,11 @@ Frontend (2 opsi):
     - `API_UPSTREAM` = URL backend kamu, contoh: `https://inventaris-backend-xxx.up.railway.app`
   - Pastikan backend mengizinkan CORS ke domain frontend (`CLIENT_ORIGIN`)
 
+Jika Railway kamu tidak memakai Docker untuk frontend dan menjalankan Node scripts:
+
+- **Build command**: `npm -w frontend run build`
+- **Start command**: `npm -w frontend start`
+
 Catatan penting:
 - **Jangan taruh** `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN` di service frontend. Itu khusus backend.
 
