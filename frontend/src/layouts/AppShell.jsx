@@ -13,6 +13,7 @@ import {
   Package,
   PackageOpen,
   Settings,
+  UserCircle2,
   Users,
 } from "lucide-react";
 import { getUser, logout } from "../lib/auth.js";
@@ -51,11 +52,13 @@ function getMenu(role) {
       { to: "/items", icon: Boxes, label: "Data Barang" },
       { to: "/categories", icon: ClipboardList, label: "Kategori Barang" },
       { to: "/suppliers", icon: Package, label: "Data Supplier" },
+      { to: "/rooms", icon: Boxes, label: "Ruangan" },
       { to: "/school", icon: GraduationCap, label: "Data Sekolah" },
       { to: "/inbound", icon: PackageOpen, label: "Barang Masuk" },
       { to: "/outbound", icon: Download, label: "Barang Keluar" },
       { to: "/loans", icon: Handshake, label: "Peminjaman" },
       { to: "/reports", icon: FileText, label: "Laporan" },
+      { to: "/profile", icon: UserCircle2, label: "Profil Akun" },
     ];
   }
   if (role === "KEPALA_SEKOLAH") {
@@ -66,6 +69,7 @@ function getMenu(role) {
       { to: "/outbound", icon: Download, label: "Barang Keluar" },
       { to: "/reports", icon: FileText, label: "Laporan" },
       { to: "/notifications", icon: Bell, label: "Notifikasi" },
+      { to: "/profile", icon: UserCircle2, label: "Profil Akun" },
     ];
   }
   if (role === "PETUGAS_TU") {
@@ -75,6 +79,7 @@ function getMenu(role) {
       { to: "/outbound", icon: Download, label: "Barang Keluar" },
       { to: "/loans", icon: Handshake, label: "Peminjaman Barang" },
       { to: "/update-stock", icon: Settings, label: "Update Stok" },
+      { to: "/profile", icon: UserCircle2, label: "Profil Akun" },
     ];
   }
   // GURU
@@ -83,6 +88,7 @@ function getMenu(role) {
     { to: "/requests", icon: BookText, label: "Ajukan Permintaan" },
     { to: "/loans", icon: Handshake, label: "Pinjam Barang" },
     { to: "/history", icon: ClipboardList, label: "Riwayat" },
+    { to: "/profile", icon: UserCircle2, label: "Profil Akun" },
   ];
 }
 

@@ -16,6 +16,8 @@ import Notifications from "./pages/Notifications.jsx";
 import Users from "./pages/Users.jsx";
 import School from "./pages/School.jsx";
 import UpdateStock from "./pages/UpdateStock.jsx";
+import Rooms from "./pages/Rooms.jsx";
+import Profile from "./pages/Profile.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -59,6 +61,7 @@ export default function App() {
         <Route path="items" element={<Items />} />
         <Route path="categories" element={<Categories />} />
         <Route path="suppliers" element={<Suppliers />} />
+        <Route path="rooms" element={<Rooms />} />
         <Route path="school" element={<School />} />
 
         {/* Transactions */}
@@ -79,6 +82,9 @@ export default function App() {
 
         {/* Reports */}
         <Route path="reports" element={<Reports />} />
+
+        {/* Profile */}
+        <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
