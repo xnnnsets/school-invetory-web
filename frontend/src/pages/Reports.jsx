@@ -1,30 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
-import { Filter, Printer, RefreshCw } from "lucide-react";
+import { Download, FileText, RefreshCw } from "lucide-react";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
 
-function TabButton({ active, children, onClick }) {
+function ReportCard({ iconBg, icon: Icon, title, desc, from, to, setFrom, setTo, onDownload }) {
   return (
-    <button
-      onClick={onClick}
-      className={`rounded-xl px-3 py-2 text-sm transition ${
-        active ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
-      }`}
-    >
-      {children}
-    </button>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className={`h-10 w-10 rounded-2xl ${iconBg} text-white flex items-center justify-center`}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <div className="min-w-0">
+          <div className="font-semibold">{title}</div>
+          <div className="text-sm text-slate-600">{desc}</div>
+        </div>
+      </div>
+
+      <div className="mt-4 text-xs text-slate-600">Periode</div>
+      <div className="mt-1 flex items-center gap-2">
+        <input type="date" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <span className="text-slate-400">-</span>
+        <input type="date" className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
+      </div>
+
+      <div className="mt-3 text-xs text-slate-600">Format</div>
+      <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white">
+        <option value="pdf">PDF</option>
+      </select>
+
+      <button className="mt-4 w-full rounded-xl bg-blue-600 text-white px-4 py-2 text-sm hover:bg-blue-500" onClick={onDownload}>
+        <span className="inline-flex items-center gap-2">
+          <Download className="h-4 w-4" /> Unduh Laporan
+        </span>
+      </button>
+    </div>
   );
 }
 
 export default function Reports() {
   const user = getUser();
-  const [tab, setTab] = useState("stock");
+  const [tab, setTab] = useState("stock"); // active rendered report table (for print)
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [status, setStatus] = useState("");
+
+  const [fromInbound, setFromInbound] = useState("");
+  const [toInbound, setToInbound] = useState("");
+  const [fromOutbound, setFromOutbound] = useState("");
+  const [toOutbound, setToOutbound] = useState("");
+  const [fromLoans, setFromLoans] = useState("");
+  const [toLoans, setToLoans] = useState("");
 
   const title = useMemo(() => {
     const map = {
@@ -60,100 +88,95 @@ export default function Reports() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
-  const showFilters = tab !== "stock";
-  const showStatus = tab === "loans" || tab === "requests";
+  function download(type) {
+    if (type === "stock") {
+      setTab("stock");
+      setTimeout(() => window.print(), 400);
+      return;
+    }
+    if (type === "inbound") {
+      setFrom(fromInbound);
+      setTo(toInbound);
+      setTab("inbound");
+      setTimeout(() => window.print(), 500);
+      return;
+    }
+    if (type === "outbound") {
+      setFrom(fromOutbound);
+      setTo(toOutbound);
+      setTab("outbound");
+      setTimeout(() => window.print(), 500);
+      return;
+    }
+    if (type === "loans") {
+      setFrom(fromLoans);
+      setTo(toLoans);
+      setStatus("");
+      setTab("loans");
+      setTimeout(() => window.print(), 500);
+      return;
+    }
+  }
 
   return (
     <div className="max-w-6xl">
       <div className="mb-1 text-2xl font-semibold">Laporan</div>
-      <div className="text-sm text-slate-600">
-        {user?.role === "GURU" ? "Kamu hanya melihat laporan milik sendiri." : "Filter dan cetak laporan sesuai kebutuhan."}
+      <div className="text-sm text-slate-600">Buat dan unduh laporan inventaris sekolah</div>
+
+      <div className="mt-5 grid lg:grid-cols-2 gap-4">
+        <ReportCard
+          iconBg="bg-blue-600"
+          icon={FileText}
+          title="Laporan Stok Barang"
+          desc="Daftar lengkap stok barang saat ini dengan detail kategori dan lokasi"
+          from={from}
+          to={to}
+          setFrom={setFrom}
+          setTo={setTo}
+          onDownload={() => download("stock")}
+        />
+        <ReportCard
+          iconBg="bg-emerald-600"
+          icon={FileText}
+          title="Laporan Barang Masuk"
+          desc="Riwayat barang masuk dengan detail supplier dan tanggal penerimaan"
+          from={fromInbound}
+          to={toInbound}
+          setFrom={setFromInbound}
+          setTo={setToInbound}
+          onDownload={() => download("inbound")}
+        />
+        <ReportCard
+          iconBg="bg-orange-500"
+          icon={FileText}
+          title="Laporan Barang Keluar"
+          desc="Riwayat barang keluar dengan detail penerima dan tujuan penggunaan"
+          from={fromOutbound}
+          to={toOutbound}
+          setFrom={setFromOutbound}
+          setTo={setToOutbound}
+          onDownload={() => download("outbound")}
+        />
+        <ReportCard
+          iconBg="bg-purple-600"
+          icon={FileText}
+          title="Laporan Peminjaman"
+          desc="Data peminjaman barang termasuk status dan riwayat pengembalian"
+          from={fromLoans}
+          to={toLoans}
+          setFrom={setFromLoans}
+          setTo={setToLoans}
+          onDownload={() => download("loans")}
+        />
       </div>
 
-      <div className="mt-5 flex flex-col lg:flex-row lg:items-center gap-2">
-        <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1">
-          <TabButton active={tab === "stock"} onClick={() => setTab("stock")}>
-            Stok
-          </TabButton>
-          <TabButton active={tab === "inbound"} onClick={() => setTab("inbound")}>
-            Masuk
-          </TabButton>
-          <TabButton active={tab === "outbound"} onClick={() => setTab("outbound")}>
-            Keluar
-          </TabButton>
-          <TabButton active={tab === "loans"} onClick={() => setTab("loans")}>
-            Peminjaman
-          </TabButton>
-          <TabButton active={tab === "requests"} onClick={() => setTab("requests")}>
-            Permintaan
-          </TabButton>
-        </div>
-
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => window.print()}>
-          <span className="inline-flex items-center gap-2">
-            <Printer className="h-4 w-4" /> Cetak
-          </span>
-        </button>
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
+      <div className="mt-4 flex items-center gap-2">
+        <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
           <span className="inline-flex items-center gap-2">
             <RefreshCw className="h-4 w-4" /> Refresh
           </span>
         </button>
       </div>
-
-      {showFilters ? (
-        <div className="mt-4 grid grid-cols-12 gap-2 items-end">
-          <div className="col-span-12 md:col-span-3">
-            <label className="text-xs font-medium text-slate-600 inline-flex items-center gap-2">
-              <Filter className="h-4 w-4" /> Dari tanggal
-            </label>
-            <input type="date" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="col-span-12 md:col-span-3">
-            <label className="text-xs font-medium text-slate-600">Sampai tanggal</label>
-            <input type="date" className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-          {showStatus ? (
-            <div className="col-span-12 md:col-span-3">
-              <label className="text-xs font-medium text-slate-600">Status</label>
-              <select className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white" value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="">(Semua)</option>
-                {tab === "loans" ? (
-                  <>
-                    <option value="PENDING">PENDING</option>
-                    <option value="APPROVED">APPROVED</option>
-                    <option value="REJECTED">REJECTED</option>
-                    <option value="RETURNED">RETURNED</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="PENDING">PENDING</option>
-                    <option value="APPROVED">APPROVED</option>
-                    <option value="REJECTED">REJECTED</option>
-                    <option value="FULFILLED">FULFILLED</option>
-                  </>
-                )}
-              </select>
-            </div>
-          ) : null}
-          <div className="col-span-12 md:col-span-3 flex gap-2">
-            <button className="mt-6 rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
-              Terapkan
-            </button>
-            <button
-              className="mt-6 rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
-              onClick={() => {
-                setFrom("");
-                setTo("");
-                setStatus("");
-                setTimeout(load, 0);
-              }}
-            >
-              Reset
-            </button>
-          </div>
-        </div>
-      ) : null}
 
       {error ? <div className="mt-3 text-sm text-rose-700">{error}</div> : null}
 
