@@ -63,7 +63,7 @@ Aplikasi ini memakai 4 role (RBAC / Role-Based Access Control). Tiap role punya 
 
 ## Tech stack
 
-- **Backend**: Node.js + Express + Prisma + SQLite + JWT + Zod validation
+- **Backend**: Node.js + Express + Prisma (PostgreSQL/MySQL/SQLite) + JWT + Zod validation
 - **Frontend**: React + Vite + TailwindCSS
 - **UI**: `lucide-react`, `framer-motion`
 - **Chart**: `chart.js` + `react-chartjs-2`
@@ -122,6 +122,28 @@ PORT=4000
 CLIENT_ORIGIN="http://localhost:5173"
 ```
 
+#### Prisma & database provider (penting)
+
+Project ini mendukung 3 provider DB:
+
+- **postgresql**
+- **mysql**
+- **sqlite**
+
+Pemilihan provider dilakukan otomatis:
+
+- Jika `DB_PROVIDER` diisi → dipakai sebagai prioritas utama
+- Jika `DB_PROVIDER` kosong → auto-detect dari prefix `DATABASE_URL`:
+  - `postgresql://` atau `postgres://` → `postgresql`
+  - `mysql://` → `mysql`
+  - `file:` → `sqlite`
+
+Prisma schema & riwayat migrations dipisah per provider agar aman “bolak-balik” DB tanpa error `P3019`:
+
+- `backend/prisma/sqlite/`
+- `backend/prisma/postgresql/`
+- `backend/prisma/mysql/`
+
 #### Konfigurasi ENV Frontend (opsional)
 
 Secara default frontend akan memanggil API dengan **same-origin** (mis. lewat reverse proxy `/api`).
@@ -135,6 +157,13 @@ Migrasi database + seed data:
 
 ```bash
 npm -w backend run db:migrate
+npm -w backend run db:seed
+```
+
+Jika kamu ingin membuat tabel tanpa migration history (bootstrap DB baru), pakai:
+
+```bash
+npm -w backend run db:push
 npm -w backend run db:seed
 ```
 
@@ -222,7 +251,7 @@ Semua endpoint berada di prefix `/api/*` dan butuh login (JWT) kecuali `/api/aut
 - **Database**:
   - Dev: SQLite ok
   - Production: lebih aman pakai **Postgres** (kalau aplikasi dipakai serius / multi-instance).
-    Saat ini schema Prisma menggunakan `sqlite` provider.
+    Project ini mendukung Postgres/MySQL/SQLite (auto-select via env).
 
 ### Deploy dengan Docker (paling mudah)
 
@@ -251,7 +280,7 @@ Opsi umum:
 
 Minimal ENV backend di Railway:
 
-- `DATABASE_URL` (untuk SQLite butuh storage persistent; jika tidak, data akan hilang saat restart)
+- `DATABASE_URL` (Postgres/MySQL disarankan untuk production)
 - `JWT_SECRET`
 - `PORT` (Railway biasanya otomatis, tapi backend sudah membaca `PORT`)
 - `CLIENT_ORIGIN` (URL frontend)
@@ -266,19 +295,8 @@ npm -w backend run db:seed
 ```
 
 Catatan:
-- `db:push` akan membuat schema tabel sesuai `schema.<provider>.prisma` tanpa history migration.
-- Ini paling aman untuk “bootstrap” DB baru di Railway ketika provider berbeda dari environment dev sebelumnya.
-
-### Catatan penting saat ganti provider DB (sqlite ↔ postgresql ↔ mysql)
-
-Prisma menyimpan riwayat migration per folder `prisma/**/migrations`.
-Project ini sudah memisahkan schema & migration per provider:
-
-- `backend/prisma/sqlite/`
-- `backend/prisma/postgresql/`
-- `backend/prisma/mysql/`
-
-Jadi ketika kamu ganti `DATABASE_URL` / `DB_PROVIDER`, Prisma otomatis pakai folder migrations yang benar dan tidak akan error `P3019` lagi.
+- `db:push` cocok untuk bootstrap DB baru tanpa migration history.
+- Untuk environment production yang sudah punya history migration sendiri, kamu bisa pakai `npm -w backend run db:deploy`.
 
 Frontend (2 opsi):
 
