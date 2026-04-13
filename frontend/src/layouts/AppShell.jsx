@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import { getUser, logout } from "../lib/auth.js";
 import { RoleBadge } from "../components/Badge.jsx";
+import { apiFetch } from "../lib/api.js";
+import { useEffect, useState } from "react";
 
-function Item({ to, icon: Icon, label }) {
+function Item({ to, icon: Icon, label, badge }) {
   return (
     <NavLink
       to={to}
@@ -31,7 +33,12 @@ function Item({ to, icon: Icon, label }) {
       <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 ring-1 ring-slate-200">
         <Icon className="h-4 w-4" />
       </span>
-      <span className="font-medium">{label}</span>
+      <span className="font-medium flex-1">{label}</span>
+      {badge ? (
+        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700 ring-1 ring-rose-200">
+          {badge}
+        </span>
+      ) : null}
     </NavLink>
   );
 }
@@ -84,6 +91,26 @@ export default function AppShell() {
   const menu = getMenu(user?.role);
   const nav = useNavigate();
   const loc = useLocation();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadUnread() {
+      if (!user) return;
+      if (user.role !== "KEPALA_SEKOLAH") return;
+      try {
+        const res = await apiFetch("/api/notifications");
+        if (mounted) setUnread(res.meta?.unread || 0);
+      } catch {
+        // ignore
+      }
+    }
+    loadUnread();
+    return () => {
+      mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loc.pathname]);
 
   return (
     <div className="min-h-full bg-slate-50">
@@ -101,7 +128,13 @@ export default function AppShell() {
 
           <div className="px-3 pb-3 space-y-1">
             {menu.map((m) => (
-              <Item key={m.to} to={m.to} icon={m.icon} label={m.label} />
+              <Item
+                key={m.to}
+                to={m.to}
+                icon={m.icon}
+                label={m.label}
+                badge={m.to === "/notifications" && unread ? unread : null}
+              />
             ))}
           </div>
 

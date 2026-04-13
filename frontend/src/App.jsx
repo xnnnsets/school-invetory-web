@@ -11,6 +11,8 @@ import Categories from "./pages/Categories.jsx";
 import Suppliers from "./pages/Suppliers.jsx";
 import Requests from "./pages/Requests.jsx";
 import History from "./pages/History.jsx";
+import Reports from "./pages/Reports.jsx";
+import Notifications from "./pages/Notifications.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -67,13 +69,13 @@ export default function App() {
 
         {/* Kepsek */}
         <Route path="stock-monitoring" element={<Items />} />
-        <Route path="notifications" element={<Placeholder title="Notifikasi" subtitle="Info stok, transaksi, dan permintaan." />} />
+        <Route path="notifications" element={<Notifications />} />
 
         {/* TU */}
         <Route path="update-stock" element={<MasterData />} />
 
         {/* Reports */}
-        <Route path="reports" element={<Placeholder title="Laporan" subtitle="Cetak laporan stok, masuk, keluar, peminjaman." />} />
+        <Route path="reports" element={<Reports />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
