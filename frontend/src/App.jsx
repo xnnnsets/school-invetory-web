@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Items from "./pages/Items.jsx";
 import Loans from "./pages/Loans.jsx";
 import MasterData from "./pages/MasterData.jsx";
+import Transactions from "./pages/Transactions.jsx";
 import { getToken } from "./lib/api.js";
 
 function RequireAuth({ children }) {
@@ -45,6 +46,14 @@ export default function App() {
         element={
           <RequireAuth>
             <MasterData />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/transactions"
+        element={
+          <RequireAuth>
+            <Transactions />
           </RequireAuth>
         }
       />
