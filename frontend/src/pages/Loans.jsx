@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
 import { ModalPanel } from "../components/Motion.jsx";
-import { Plus, RefreshCw, X } from "lucide-react";
+import { Clock, Eye, Plus, RefreshCw, X } from "lucide-react";
 
 function statusPill(status) {
   const map = {
@@ -38,6 +38,12 @@ export default function Loans() {
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState([{ itemId: "", qty: 1 }]);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState("all");
+  const [dueAt, setDueAt] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+  });
 
   async function load() {
     setLoading(true);
@@ -75,11 +81,34 @@ export default function Loans() {
     });
   }, [loans, query]);
 
+  const overdueIds = useMemo(() => {
+    const now = Date.now();
+    const set = new Set();
+    for (const ln of loans) {
+      if (ln.status === "APPROVED" && ln.dueAt && !ln.returnedAt) {
+        if (new Date(ln.dueAt).getTime() < now) set.add(ln.id);
+      }
+    }
+    return set;
+  }, [loans]);
+
+  const tabbed = useMemo(() => {
+    if (tab === "all") return filtered;
+    if (tab === "pending") return filtered.filter((x) => x.status === "PENDING");
+    if (tab === "borrowed") return filtered.filter((x) => x.status === "APPROVED" && !overdueIds.has(x.id));
+    if (tab === "overdue") return filtered.filter((x) => overdueIds.has(x.id));
+    if (tab === "returned") return filtered.filter((x) => x.status === "RETURNED");
+    return filtered;
+  }, [filtered, tab, overdueIds]);
+
   async function submitLoan() {
     setSaving(true);
     setError("");
     try {
-      await apiFetch("/api/loans", { method: "POST", body: { lines } });
+      await apiFetch("/api/loans", {
+        method: "POST",
+        body: { lines, dueAt: dueAt ? new Date(dueAt).toISOString() : undefined },
+      });
       setOpen(false);
       await load();
     } catch (e) {
@@ -132,6 +161,26 @@ export default function Loans() {
 
       {error ? <div className="mt-3 text-sm text-red-600">{error}</div> : null}
 
+      {!isGuru ? (
+        <div className="mt-4 inline-flex rounded-2xl border border-slate-200 bg-white p-1">
+          <button onClick={() => setTab("all")} className={`rounded-xl px-3 py-2 text-sm ${tab === "all" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+            Semua
+          </button>
+          <button onClick={() => setTab("pending")} className={`rounded-xl px-3 py-2 text-sm ${tab === "pending" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+            Menunggu
+          </button>
+          <button onClick={() => setTab("borrowed")} className={`rounded-xl px-3 py-2 text-sm ${tab === "borrowed" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+            Dipinjam
+          </button>
+          <button onClick={() => setTab("overdue")} className={`rounded-xl px-3 py-2 text-sm ${tab === "overdue" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+            Terlambat
+          </button>
+          <button onClick={() => setTab("returned")} className={`rounded-xl px-3 py-2 text-sm ${tab === "returned" ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+            Dikembalikan
+          </button>
+        </div>
+      ) : null}
+
       <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600">
@@ -139,6 +188,8 @@ export default function Loans() {
               <th className="text-left font-medium px-3 py-2">Waktu</th>
               <th className="text-left font-medium px-3 py-2">Peminjam</th>
               <th className="text-left font-medium px-3 py-2">Barang</th>
+              <th className="text-left font-medium px-3 py-2">Tanggal Pinjam</th>
+              <th className="text-left font-medium px-3 py-2">Tanggal Kembali</th>
               <th className="text-left font-medium px-3 py-2">Status</th>
               <th className="text-right font-medium px-3 py-2">Aksi</th>
             </tr>
@@ -146,12 +197,12 @@ export default function Loans() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
                   Memuat...
                 </td>
               </tr>
-            ) : filtered.length ? (
-              filtered.map((ln) => (
+            ) : tabbed.length ? (
+              tabbed.map((ln) => (
                 <tr key={ln.id} className="border-t border-slate-100 hover:bg-slate-50">
                   <td className="px-3 py-2 text-xs text-slate-600">
                     {new Date(ln.requestedAt).toLocaleString()}
@@ -170,10 +221,19 @@ export default function Loans() {
                       ))}
                     </div>
                   </td>
-                  <td className="px-3 py-2">{statusPill(ln.status)}</td>
+                  <td className="px-3 py-2 text-slate-600 text-xs">{ln.approvedAt ? new Date(ln.approvedAt).toISOString().slice(0, 10) : "-"}</td>
+                  <td className="px-3 py-2 text-slate-600 text-xs">{ln.dueAt ? new Date(ln.dueAt).toISOString().slice(0, 10) : "-"}</td>
+                  <td className="px-3 py-2">{overdueIds.has(ln.id) ? (
+                    <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700 ring-1 ring-rose-200">
+                      Terlambat
+                    </span>
+                  ) : statusPill(ln.status)}</td>
                   <td className="px-3 py-2 text-right">
                     {canProcess ? (
                       <div className="inline-flex gap-2">
+                        <button className="rounded-lg border border-slate-200 p-2 hover:bg-white" title="Lihat">
+                          <Eye className="h-4 w-4" />
+                        </button>
                         {ln.status === "PENDING" ? (
                           <>
                             <button
@@ -207,7 +267,7 @@ export default function Loans() {
               ))
             ) : (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
                   Tidak ada data.
                 </td>
               </tr>
@@ -231,6 +291,15 @@ export default function Loans() {
               </div>
 
             <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-600">Tanggal Kembali (target)</label>
+                <input
+                  type="date"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  value={dueAt}
+                  onChange={(e) => setDueAt(e.target.value)}
+                />
+              </div>
               {lines.map((ln, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-8">
