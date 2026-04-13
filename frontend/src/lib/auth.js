@@ -1,0 +1,30 @@
+import { apiFetch, setToken } from "./api";
+
+export function getUser() {
+  const raw = localStorage.getItem("user");
+  return raw ? JSON.parse(raw) : null;
+}
+
+export function setUser(user) {
+  if (!user) localStorage.removeItem("user");
+  else localStorage.setItem("user", JSON.stringify(user));
+}
+
+export async function login(email, password) {
+  const res = await apiFetch("/api/auth/login", { method: "POST", body: { email, password } });
+  setToken(res.accessToken);
+  setUser(res.user);
+  return res.user;
+}
+
+export function logout() {
+  setToken(null);
+  setUser(null);
+}
+
+export async function fetchMe() {
+  const res = await apiFetch("/api/auth/me");
+  setUser(res.user);
+  return res.user;
+}
+
