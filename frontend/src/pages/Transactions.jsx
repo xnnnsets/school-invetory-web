@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
 import { ModalPanel } from "../components/Motion.jsx";
-import { Filter, Plus, Printer, RefreshCw, X } from "lucide-react";
+import { Calendar, Filter, Package, Plus, RefreshCw, TrendingDown, TrendingUp, X } from "lucide-react";
 
 function canManage(role) {
   return role === "ADMIN" || role === "PETUGAS_TU";
@@ -33,6 +33,7 @@ export default function Transactions({ mode }) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState("");
+  const [recipient, setRecipient] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [lines, setLines] = useState([{ itemId: "", qty: 1 }]);
   const [from, setFrom] = useState("");
@@ -75,6 +76,39 @@ export default function Transactions({ mode }) {
     return rows.filter((r) => JSON.stringify(r).toLowerCase().includes(q));
   }, [rows, query]);
 
+  const displayRows = useMemo(() => {
+    // flatten per-line like the figma table
+    const out = [];
+    for (const r of filtered) {
+      for (const ln of r.lines || []) {
+        out.push({
+          id: `${r.id}:${ln.id}`,
+          date: r.date,
+          note: r.note,
+          supplierName: r.supplier?.name,
+          recipient: r.recipient,
+          operator: r.createdBy?.name,
+          itemName: ln.item?.name,
+          qty: ln.qty,
+          unit: ln.item?.unit || "unit",
+        });
+      }
+    }
+    return out;
+  }, [filtered]);
+
+  const stats = useMemo(() => {
+    const totalTx = filtered.length;
+    const totalItems = displayRows.reduce((a, x) => a + (x.qty || 0), 0);
+    const today = new Date();
+    const isSameDay = (d) => {
+      const dt = new Date(d);
+      return dt.getFullYear() === today.getFullYear() && dt.getMonth() === today.getMonth() && dt.getDate() === today.getDate();
+    };
+    const todayCount = filtered.filter((r) => isSameDay(r.date)).length;
+    return { totalTx, totalItems, todayCount };
+  }, [filtered, displayRows]);
+
   async function submit() {
     setSaving(true);
     setError("");
@@ -83,10 +117,11 @@ export default function Transactions({ mode }) {
       const body =
         tab === "inbound"
           ? { note: note || undefined, supplierId: supplierId || null, lines }
-          : { note: note || undefined, lines };
+          : { recipient: recipient || undefined, note: note || undefined, lines };
       await apiFetch(endpoint, { method: "POST", body });
       setOpen(false);
       setNote("");
+      setRecipient("");
       await load();
     } catch (e) {
       setError(e?.message || "Gagal menyimpan transaksi");
@@ -102,30 +137,68 @@ export default function Transactions({ mode }) {
         {tab === "inbound" ? "Pencatatan barang masuk (menambah stok)." : "Pencatatan barang keluar (mengurangi stok)."}
       </div>
 
+      <div className="mt-5 grid md:grid-cols-3 gap-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className={`h-10 w-10 rounded-2xl ${tab === "inbound" ? "bg-emerald-600" : "bg-orange-500"} text-white flex items-center justify-center`}>
+              {tab === "inbound" ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+            </div>
+            <div>
+              <div className="text-2xl font-semibold">{stats.totalTx}</div>
+              <div className="text-sm text-slate-600">Total Transaksi</div>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
+              <Package className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-semibold">{stats.totalItems}</div>
+              <div className="text-sm text-slate-600">Total Item</div>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-2xl font-semibold">{stats.todayCount}</div>
+              <div className="text-sm text-slate-600">Hari Ini</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="mt-5 flex flex-col md:flex-row gap-2">
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => window.print()}>
+        <div className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2">
+          <input
+            className="w-full text-sm outline-none"
+            placeholder={tab === "inbound" ? "Cari barang, supplier, atau penerima..." : "Cari barang, penerima, atau operator..."}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">
           <span className="inline-flex items-center gap-2">
-            <Printer className="h-4 w-4" /> Cetak
+            <Filter className="h-4 w-4" /> Filter Tanggal
           </span>
         </button>
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
+        {manage ? (
+          <button className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm hover:bg-blue-500" onClick={() => setOpen(true)}>
+            <span className="inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" /> Tambah {activeLabel}
+            </span>
+          </button>
+        ) : null}
+        <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
           <span className="inline-flex items-center gap-2">
             <RefreshCw className="h-4 w-4" /> Refresh
           </span>
         </button>
-        {manage ? (
-          <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800" onClick={() => setOpen(true)}>
-            <span className="inline-flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Tambah
-            </span>
-          </button>
-        ) : null}
-        <input
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-          placeholder="Cari catatan / barang..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
       </div>
 
         <div className="mt-3 grid grid-cols-12 gap-2 items-end">
@@ -175,42 +248,43 @@ export default function Transactions({ mode }) {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>
-              <th className="text-left font-medium px-3 py-2">Waktu</th>
-              {tab === "inbound" ? <th className="text-left font-medium px-3 py-2">Supplier</th> : null}
-              <th className="text-left font-medium px-3 py-2">Catatan</th>
-              <th className="text-left font-medium px-3 py-2">Detail</th>
+              <th className="text-left font-medium px-3 py-2">Tanggal</th>
+              <th className="text-left font-medium px-3 py-2">Nama Barang</th>
+              <th className="text-left font-medium px-3 py-2">Jumlah</th>
+              {tab === "inbound" ? (
+                <th className="text-left font-medium px-3 py-2">Supplier</th>
+              ) : (
+                <th className="text-left font-medium px-3 py-2">Penerima</th>
+              )}
+              <th className="text-left font-medium px-3 py-2">Keterangan</th>
+              <th className="text-left font-medium px-3 py-2">Operator</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={tab === "inbound" ? 4 : 3} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
                   Memuat...
                 </td>
               </tr>
-            ) : filtered.length ? (
-              filtered.map((r) => (
-                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50 align-top">
-                  <td className="px-3 py-2 text-xs text-slate-600">{formatDateTime(r.date)}</td>
+            ) : displayRows.length ? (
+              displayRows.map((r) => (
+                <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50">
+                  <td className="px-3 py-2 text-xs text-slate-600">{new Date(r.date).toLocaleDateString()}</td>
+                  <td className="px-3 py-2 font-medium">{r.itemName || "-"}</td>
+                  <td className="px-3 py-2 text-slate-700">{r.qty} {r.unit}</td>
                   {tab === "inbound" ? (
-                    <td className="px-3 py-2 text-slate-700">{r.supplier?.name || "-"}</td>
-                  ) : null}
-                  <td className="px-3 py-2 text-slate-700">{r.note || "-"}</td>
-                  <td className="px-3 py-2">
-                    <div className="space-y-1">
-                      {(r.lines || []).map((ln) => (
-                        <div key={ln.id} className="text-xs">
-                          <span className="font-medium">{ln.item?.name}</span>{" "}
-                          <span className="text-slate-500">× {ln.qty}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </td>
+                    <td className="px-3 py-2 text-slate-700">{r.supplierName || "-"}</td>
+                  ) : (
+                    <td className="px-3 py-2 text-slate-700">{r.recipient || "-"}</td>
+                  )}
+                  <td className="px-3 py-2 text-slate-600">{r.note || "-"}</td>
+                  <td className="px-3 py-2 text-slate-600">{r.operator || "-"}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={tab === "inbound" ? 4 : 3} className="px-3 py-6 text-center text-slate-500">
+                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
                   Tidak ada data.
                 </td>
               </tr>
@@ -249,6 +323,18 @@ export default function Transactions({ mode }) {
                       </option>
                     ))}
                   </select>
+                </div>
+              ) : null}
+
+              {tab === "outbound" ? (
+                <div>
+                  <label className="text-xs font-medium text-slate-600">Penerima</label>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                    value={recipient}
+                    onChange={(e) => setRecipient(e.target.value)}
+                    placeholder="Misal: Kelas 7A / Lab Komputer"
+                  />
                 </div>
               ) : null}
 
