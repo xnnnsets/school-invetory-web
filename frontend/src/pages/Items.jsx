@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { Plus, Printer, RefreshCw, X } from "lucide-react";
 import Layout from "../components/Layout.jsx";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
+import { ModalPanel, Page } from "../components/Motion.jsx";
 
 function canManage(role) {
   return role === "ADMIN" || role === "PETUGAS_TU";
@@ -70,20 +72,25 @@ export default function Items() {
             className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
             onClick={() => window.print()}
           >
-            Cetak
+            <span className="inline-flex items-center gap-2">
+              <Printer className="h-4 w-4" /> Cetak
+            </span>
           </button>
           {canManage(user?.role) ? (
             <button
               className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800"
               onClick={() => setOpen(true)}
             >
-              + Tambah Barang
+              <span className="inline-flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Tambah Barang
+              </span>
             </button>
           ) : null}
         </>
       }
     >
-      <div className="grid md:grid-cols-3 gap-3">
+      <Page>
+        <div className="grid md:grid-cols-3 gap-3">
         <div className="md:col-span-2">
           <div className="flex gap-2 items-center">
             <input
@@ -97,7 +104,9 @@ export default function Items() {
               onClick={load}
               disabled={loading}
             >
-              Refresh
+              <span className="inline-flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" /> Refresh
+              </span>
             </button>
           </div>
 
@@ -175,20 +184,21 @@ export default function Items() {
             </div>
           </div>
         </div>
-      </div>
+        </div>
 
       {open ? (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-semibold">Tambah Barang</div>
-                <div className="text-sm text-slate-600">Akan muncul di master stok.</div>
+          <ModalPanel>
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5 mx-auto">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-lg font-semibold">Tambah Barang</div>
+                  <div className="text-sm text-slate-600">Akan muncul di master stok.</div>
+                </div>
+                <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)} aria-label="Tutup">
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)}>
-                ✕
-              </button>
-            </div>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
               <div>
@@ -237,9 +247,11 @@ export default function Items() {
                 {saving ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
-          </div>
+            </div>
+          </ModalPanel>
         </div>
       ) : null}
+      </Page>
     </Layout>
   );
 }

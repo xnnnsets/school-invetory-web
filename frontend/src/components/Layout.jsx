@@ -1,9 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { Boxes, ClipboardList, Handshake, Home, PackageSearch, Repeat2 } from "lucide-react";
 import Logo from "./Logo.jsx";
 import { RoleBadge } from "./Badge.jsx";
 import { getUser, logout } from "../lib/auth.js";
 
-function NavItem({ to, label, description }) {
+function NavItem({ to, label, description, icon: Icon }) {
   return (
     <NavLink
       to={to}
@@ -13,34 +14,43 @@ function NavItem({ to, label, description }) {
         }`
       }
     >
-      <div className="text-sm font-medium">{label}</div>
-      {description ? <div className="text-xs opacity-80">{description}</div> : null}
+      <div className="flex items-center gap-2">
+        {Icon ? (
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-black/5">
+            <Icon className="h-4 w-4" />
+          </span>
+        ) : null}
+        <div className="min-w-0">
+          <div className="text-sm font-medium">{label}</div>
+          {description ? <div className="text-xs opacity-80">{description}</div> : null}
+        </div>
+      </div>
     </NavLink>
   );
 }
 
 function getNav(role) {
-  const common = [{ to: "/", label: "Dashboard", description: "Ringkasan & akses cepat" }];
+  const common = [{ to: "/", label: "Dashboard", description: "Ringkasan & akses cepat", icon: Home }];
   if (role === "GURU") {
     return [
       ...common,
-      { to: "/master/items", label: "Stok Barang", description: "Lihat stok tersedia" },
-      { to: "/loans", label: "Peminjaman", description: "Ajukan & riwayat pinjam" },
+      { to: "/master/items", label: "Stok Barang", description: "Lihat stok tersedia", icon: PackageSearch },
+      { to: "/loans", label: "Peminjaman", description: "Ajukan & riwayat pinjam", icon: Handshake },
     ];
   }
   if (role === "KEPALA_SEKOLAH") {
     return [
       ...common,
-      { to: "/master/items", label: "Stok Barang", description: "Monitoring stok" },
-      { to: "/loans", label: "Peminjaman", description: "Monitoring peminjaman" },
+      { to: "/master/items", label: "Stok Barang", description: "Monitoring stok", icon: PackageSearch },
+      { to: "/loans", label: "Peminjaman", description: "Monitoring peminjaman", icon: Handshake },
     ];
   }
   return [
     ...common,
-    { to: "/master/items", label: "Master Barang", description: "Barang & stok" },
-    { to: "/master", label: "Master Data", description: "Kategori, ruangan, supplier" },
-    { to: "/transactions", label: "Transaksi", description: "Barang masuk & keluar" },
-    { to: "/loans", label: "Peminjaman", description: "Approve & pengembalian" },
+    { to: "/master/items", label: "Master Barang", description: "Barang & stok", icon: Boxes },
+    { to: "/master", label: "Master Data", description: "Kategori, ruangan, supplier", icon: ClipboardList },
+    { to: "/transactions", label: "Transaksi", description: "Barang masuk & keluar", icon: Repeat2 },
+    { to: "/loans", label: "Peminjaman", description: "Approve & pengembalian", icon: Handshake },
   ];
 }
 
@@ -67,7 +77,7 @@ export default function Layout({ title, subtitle, actions, children }) {
 
               <div className="mt-4 space-y-1">
                 {nav.map((it) => (
-                  <NavItem key={it.to} to={it.to} label={it.label} description={it.description} />
+                  <NavItem key={it.to} to={it.to} label={it.label} description={it.description} icon={it.icon} />
                 ))}
               </div>
 
