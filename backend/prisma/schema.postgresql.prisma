@@ -3,13 +3,6 @@ generator client {
 }
 
 datasource db {
-  // NOTE:
-  // Prisma tidak bisa mengganti provider via ENV pada satu schema.
-  // Gunakan file schema khusus provider:
-  // - schema.postgresql.prisma
-  // - schema.mysql.prisma
-  // - schema.sqlite.prisma
-  // Script npm akan memilih otomatis berdasarkan DATABASE_URL / DB_PROVIDER.
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
@@ -22,18 +15,18 @@ enum UserRole {
 }
 
 model School {
-  id        String   @id @default(cuid())
-  name      String
-  npsn      String?
-  level     String?
-  status    String?
-  address   String?
-  phone     String?
-  email     String?
-  website   String?
+  id             String   @id @default(cuid())
+  name           String
+  npsn           String?
+  level          String?
+  status         String?
+  address        String?
+  phone          String?
+  email          String?
+  website        String?
   headmasterName String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model User {
@@ -63,11 +56,11 @@ model User {
 }
 
 model Category {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id          String   @id @default(cuid())
+  name        String   @unique
   description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   items Item[]
 }
@@ -120,37 +113,37 @@ model Item {
 }
 
 model Inbound {
-  id          String   @id @default(cuid())
-  date        DateTime @default(now())
+  id          String    @id @default(cuid())
+  date        DateTime  @default(now())
   note        String?
   supplierId  String?
   supplier    Supplier? @relation(fields: [supplierId], references: [id])
   createdById String?
-  createdBy   User?    @relation("InboundCreatedBy", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdBy   User?     @relation("InboundCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   lines InboundLine[]
 }
 
 model InboundLine {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   inboundId String
-  inbound   Inbound  @relation(fields: [inboundId], references: [id], onDelete: Cascade)
+  inbound   Inbound @relation(fields: [inboundId], references: [id], onDelete: Cascade)
   itemId    String
-  item      Item     @relation(fields: [itemId], references: [id])
+  item      Item    @relation(fields: [itemId], references: [id])
   qty       Int
 }
 
 model Outbound {
-  id        String   @id @default(cuid())
-  date      DateTime @default(now())
-  recipient String?
-  note      String?
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  recipient   String?
+  note        String?
   createdById String?
   createdBy   User?    @relation("OutboundCreatedBy", fields: [createdById], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   lines OutboundLine[]
 }
@@ -172,22 +165,22 @@ enum LoanStatus {
 }
 
 model Loan {
-  id           String     @id @default(cuid())
-  status       LoanStatus @default(PENDING)
-  requestedAt  DateTime   @default(now())
-  approvedAt   DateTime?
-  dueAt        DateTime?
-  returnedAt   DateTime?
-  note         String?
+  id          String     @id @default(cuid())
+  status      LoanStatus @default(PENDING)
+  requestedAt DateTime   @default(now())
+  approvedAt  DateTime?
+  dueAt       DateTime?
+  returnedAt  DateTime?
+  note        String?
 
-  requesterId  String
-  requester    User       @relation("LoanRequester", fields: [requesterId], references: [id])
+  requesterId String
+  requester   User @relation("LoanRequester", fields: [requesterId], references: [id])
 
-  handledById  String?
-  handledBy    User?      @relation("LoanHandler", fields: [handledById], references: [id])
+  handledById String?
+  handledBy   User? @relation("LoanHandler", fields: [handledById], references: [id])
 
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   lines LoanLine[]
 }
@@ -217,13 +210,13 @@ model Request {
   note        String?
 
   requesterId String
-  requester   User          @relation("RequestRequester", fields: [requesterId], references: [id])
+  requester   User @relation("RequestRequester", fields: [requesterId], references: [id])
 
   handledById String?
-  handledBy   User?         @relation("RequestHandler", fields: [handledById], references: [id])
+  handledBy   User? @relation("RequestHandler", fields: [handledById], references: [id])
 
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   lines RequestLine[]
 }
@@ -240,7 +233,7 @@ model RequestLine {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   body      String?
   isRead    Boolean  @default(false)
@@ -248,13 +241,13 @@ model Notification {
 }
 
 model StockAdjustment {
-  id        String   @id @default(cuid())
-  itemId    String
-  item      Item     @relation(fields: [itemId], references: [id])
-  delta     Int
-  reason    String?
+  id          String   @id @default(cuid())
+  itemId      String
+  item        Item @relation(fields: [itemId], references: [id])
+  delta       Int
+  reason      String?
   createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  createdAt DateTime @default(now())
+  createdBy   User @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
 }
 

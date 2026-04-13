@@ -94,8 +94,22 @@ cp backend/.env.example backend/.env
 Buka `backend/.env` dan pastikan variabel berikut terisi.
 
 ```env
-# Lokasi database SQLite (file akan dibuat otomatis)
-DATABASE_URL="file:./dev.db"
+# Provider DB (opsional).
+# Jika tidak diset, sistem akan auto-detect dari prefix DATABASE_URL:
+# - postgresql:// atau postgres://  -> postgresql
+# - mysql://                       -> mysql
+# - file:                          -> sqlite
+DB_PROVIDER="postgresql"
+
+# URL koneksi database (wajib)
+# PostgreSQL:
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DB?schema=public"
+
+# SQLite (untuk dev saja):
+# DATABASE_URL="file:./dev.db"
+
+# MySQL:
+# DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DB"
 
 # Secret untuk tanda tangan JWT (ubah untuk produksi)
 JWT_SECRET="dev_secret_change_me"

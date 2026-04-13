@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "postinstall": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "postinstall": "node scripts/prisma.mjs generate",
+    "db:migrate": "node scripts/prisma.mjs migrate dev",
+    "db:deploy": "node scripts/prisma.mjs migrate deploy",
     "db:seed": "node prisma/seed.js",
-    "prisma:generate": "prisma generate"
+    "prisma:generate": "node scripts/prisma.mjs generate"
   },
   "dependencies": {
     "@prisma/client": "^6.16.1",
