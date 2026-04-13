@@ -269,6 +269,17 @@ Catatan:
 - `db:push` akan membuat schema tabel sesuai `schema.<provider>.prisma` tanpa history migration.
 - Ini paling aman untuk “bootstrap” DB baru di Railway ketika provider berbeda dari environment dev sebelumnya.
 
+### Catatan penting saat ganti provider DB (sqlite ↔ postgresql ↔ mysql)
+
+Prisma menyimpan riwayat migration per folder `prisma/**/migrations`.
+Project ini sudah memisahkan schema & migration per provider:
+
+- `backend/prisma/sqlite/`
+- `backend/prisma/postgresql/`
+- `backend/prisma/mysql/`
+
+Jadi ketika kamu ganti `DATABASE_URL` / `DB_PROVIDER`, Prisma otomatis pakai folder migrations yang benar dan tidak akan error `P3019` lagi.
+
 Frontend (2 opsi):
 
 - **Opsi A (disarankan untuk Railway, paling simpel)**: frontend panggil backend via URL publik

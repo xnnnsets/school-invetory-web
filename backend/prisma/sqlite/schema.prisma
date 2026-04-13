@@ -1,0 +1,253 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  KEPALA_SEKOLAH
+  PETUGAS_TU
+  GURU
+}
+
+model School {
+  id             String   @id @default(cuid())
+  name           String
+  npsn           String?
+  level          String?
+  status         String?
+  address        String?
+  phone          String?
+  email          String?
+  website        String?
+  headmasterName String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  photoUrl     String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  loansRequested Loan[] @relation("LoanRequester")
+  loansHandled   Loan[] @relation("LoanHandler")
+
+  requestsRequested Request[] @relation("RequestRequester")
+  requestsHandled   Request[] @relation("RequestHandler")
+
+  notifications Notification[]
+
+  inboundCreated  Inbound[]  @relation("InboundCreatedBy")
+  outboundCreated Outbound[] @relation("OutboundCreatedBy")
+
+  stockAdjustments StockAdjustment[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items Item[]
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inbound Inbound[]
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items Item[]
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  unit        String   @default("unit")
+  stock       Int      @default(0)
+  minStock    Int      @default(0)
+  description String?
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  roomId String?
+  room   Room? @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inboundLines  InboundLine[]
+  outboundLines OutboundLine[]
+  loanLines     LoanLine[]
+  requestLines  RequestLine[]
+
+  stockAdjustments StockAdjustment[]
+}
+
+model Inbound {
+  id          String    @id @default(cuid())
+  date        DateTime  @default(now())
+  note        String?
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  createdById String?
+  createdBy   User?     @relation("InboundCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lines InboundLine[]
+}
+
+model InboundLine {
+  id        String  @id @default(cuid())
+  inboundId String
+  inbound   Inbound @relation(fields: [inboundId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item    @relation(fields: [itemId], references: [id])
+  qty       Int
+}
+
+model Outbound {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  recipient   String?
+  note        String?
+  createdById String?
+  createdBy   User?    @relation("OutboundCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines OutboundLine[]
+}
+
+model OutboundLine {
+  id         String   @id @default(cuid())
+  outboundId String
+  outbound   Outbound @relation(fields: [outboundId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id])
+  qty        Int
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RETURNED
+}
+
+model Loan {
+  id          String     @id @default(cuid())
+  status      LoanStatus @default(PENDING)
+  requestedAt DateTime   @default(now())
+  approvedAt  DateTime?
+  dueAt       DateTime?
+  returnedAt  DateTime?
+  note        String?
+
+  requesterId String
+  requester   User @relation("LoanRequester", fields: [requesterId], references: [id])
+
+  handledById String?
+  handledBy   User? @relation("LoanHandler", fields: [handledById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines LoanLine[]
+}
+
+model LoanLine {
+  id     String @id @default(cuid())
+  loanId String
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+  qty    Int
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+model Request {
+  id          String        @id @default(cuid())
+  status      RequestStatus @default(PENDING)
+  requestedAt DateTime      @default(now())
+  approvedAt  DateTime?
+  fulfilledAt DateTime?
+  note        String?
+
+  requesterId String
+  requester   User @relation("RequestRequester", fields: [requesterId], references: [id])
+
+  handledById String?
+  handledBy   User? @relation("RequestHandler", fields: [handledById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines RequestLine[]
+}
+
+model RequestLine {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item    @relation(fields: [itemId], references: [id])
+  qty       Int
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model StockAdjustment {
+  id          String   @id @default(cuid())
+  itemId      String
+  item        Item @relation(fields: [itemId], references: [id])
+  delta       Int
+  reason      String?
+  createdById String
+  createdBy   User @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+

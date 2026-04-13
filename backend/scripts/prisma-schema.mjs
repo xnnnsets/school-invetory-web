@@ -26,7 +26,8 @@ export function getPrismaProvider() {
 
 export function getSchemaPath() {
   const provider = getPrismaProvider();
-  const file = `schema.${provider}.prisma`;
-  return path.join(process.cwd(), "prisma", file);
+  // Put each provider in its own prisma subfolder so migrations don't conflict
+  // when switching providers (each folder has its own migrations + lockfile).
+  return path.join(process.cwd(), "prisma", provider, "schema.prisma");
 }
 
