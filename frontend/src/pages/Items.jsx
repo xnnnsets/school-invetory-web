@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Printer, RefreshCw, X } from "lucide-react";
+import { Box, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
 import { ModalPanel, Page } from "../components/Motion.jsx";
@@ -22,6 +22,7 @@ export default function Items() {
   const [form, setForm] = useState({ code: "", name: "", categoryId: "", unit: "unit", minStock: 0, roomId: "" });
   const [saving, setSaving] = useState(false);
   const [edit, setEdit] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -85,57 +86,75 @@ export default function Items() {
     }
   }
 
+  async function onDelete() {
+    if (!confirmDel) return;
+    setSaving(true);
+    setError("");
+    try {
+      await apiFetch(`/api/items/${confirmDel.id}`, { method: "DELETE" });
+      setConfirmDel(null);
+      await load();
+    } catch (e) {
+      setError(e?.message || "Gagal menghapus");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function statusLabel(it) {
+    if ((it.minStock || 0) > 0 && it.stock <= it.minStock) return { text: "Menipis", cls: "bg-amber-50 text-amber-800 ring-amber-200" };
+    return { text: "Tersedia", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" };
+  }
+
   return (
     <div className="max-w-6xl">
       <div className="mb-1 text-2xl font-semibold">Data Barang</div>
-      <div className="text-sm text-slate-600">Kelola master barang dan monitoring stok.</div>
+      <div className="text-sm text-slate-600">Kelola data barang inventaris sekolah</div>
 
-      <div className="mt-5 flex flex-col md:flex-row gap-2">
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => window.print()}>
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="flex-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+          <Box className="h-4 w-4 text-slate-400" />
+          <input
+            className="w-full text-sm outline-none"
+            placeholder="Cari kode atau nama barang..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <button className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50">
           <span className="inline-flex items-center gap-2">
-            <Printer className="h-4 w-4" /> Cetak
-          </span>
-        </button>
-        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load} disabled={loading}>
-          <span className="inline-flex items-center gap-2">
-            <RefreshCw className="h-4 w-4" /> Refresh
+            <SlidersHorizontal className="h-4 w-4" /> Filter
           </span>
         </button>
         {canManage(user?.role) ? (
-          <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800" onClick={() => setOpen(true)}>
+          <button className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm hover:bg-blue-500" onClick={() => setOpen(true)}>
             <span className="inline-flex items-center gap-2">
-              <Plus className="h-4 w-4" /> Tambah
+              <Plus className="h-4 w-4" /> Tambah Barang
             </span>
           </button>
         ) : null}
-        <input
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-          placeholder="Cari kode/nama/kategori..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
       </div>
 
       <Page>
-        <div className="grid md:grid-cols-3 gap-3">
-        <div className="md:col-span-2">
-          {error ? <div className="mt-3 text-sm text-red-600">{error}</div> : null}
+        {error ? <div className="mt-3 text-sm text-rose-700">{error}</div> : null}
 
-          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-slate-600">
                 <tr>
                   <th className="text-left font-medium px-3 py-2">Kode</th>
-                  <th className="text-left font-medium px-3 py-2">Nama</th>
+                  <th className="text-left font-medium px-3 py-2">Nama Barang</th>
                   <th className="text-left font-medium px-3 py-2">Kategori</th>
-                  <th className="text-right font-medium px-3 py-2">Stok</th>
+                  <th className="text-left font-medium px-3 py-2">Stok</th>
+                  <th className="text-left font-medium px-3 py-2">Lokasi</th>
+                  <th className="text-left font-medium px-3 py-2">Status</th>
                   <th className="text-right font-medium px-3 py-2">Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+                    <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
                       Memuat...
                     </td>
                   </tr>
@@ -143,37 +162,50 @@ export default function Items() {
                   filtered.map((it) => (
                     <tr key={it.id} className="border-t border-slate-100 hover:bg-slate-50">
                       <td className="px-3 py-2 font-mono text-xs">{it.code}</td>
-                      <td className="px-3 py-2 font-medium">{it.name}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                            <Box className="h-4 w-4 text-slate-600" />
+                          </div>
+                          <div className="font-medium">{it.name}</div>
+                        </div>
+                      </td>
                       <td className="px-3 py-2 text-slate-600">{it.category?.name || "-"}</td>
-                      <td className="px-3 py-2 text-right">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${
-                            it.minStock && it.stock <= it.minStock
-                              ? "bg-rose-50 text-rose-700 ring-rose-200"
-                              : "bg-emerald-50 text-emerald-700 ring-emerald-200"
-                          }`}
-                        >
-                          {it.stock}
+                      <td className="px-3 py-2 text-slate-700">{it.stock} {it.unit}</td>
+                      <td className="px-3 py-2 text-slate-600">{it.room?.name || "-"}</td>
+                      <td className="px-3 py-2">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${statusLabel(it).cls}`}>
+                          {statusLabel(it).text}
                         </span>
                       </td>
                       <td className="px-3 py-2 text-right">
                         {canManage(user?.role) ? (
-                          <button
-                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-1.5 text-xs hover:bg-slate-50"
-                            onClick={() =>
-                              setEdit({
-                                id: it.id,
-                                code: it.code,
-                                name: it.name,
-                                categoryId: it.categoryId,
-                                unit: it.unit,
-                                minStock: it.minStock,
-                                roomId: it.roomId || "",
-                              })
-                            }
-                          >
-                            <Pencil className="h-3.5 w-3.5" /> Edit
-                          </button>
+                          <div className="inline-flex gap-2">
+                            <button
+                              className="rounded-lg border border-slate-200 p-2 hover:bg-white"
+                              onClick={() =>
+                                setEdit({
+                                  id: it.id,
+                                  code: it.code,
+                                  name: it.name,
+                                  categoryId: it.categoryId,
+                                  unit: it.unit,
+                                  minStock: it.minStock,
+                                  roomId: it.roomId || "",
+                                })
+                              }
+                              title="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-700 hover:bg-rose-100"
+                              title="Hapus"
+                              onClick={() => setConfirmDel({ id: it.id, name: it.name })}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-xs text-slate-400">-</span>
                         )}
@@ -182,7 +214,7 @@ export default function Items() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
+                    <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
                       Tidak ada data.
                     </td>
                   </tr>
@@ -190,33 +222,6 @@ export default function Items() {
               </tbody>
             </table>
           </div>
-        </div>
-
-        <div className="md:col-span-1">
-          <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-indigo-600 to-cyan-500 text-white p-4">
-            <div className="text-xs opacity-90">Total Item</div>
-            <div className="mt-1 text-3xl font-semibold">{items.length}</div>
-            <div className="mt-2 text-xs opacity-90">
-              Tip: gunakan fitur cetak untuk laporan stok sederhana.
-            </div>
-          </div>
-
-          <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="text-sm font-semibold">Kategori</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {categories.length ? (
-                categories.map((c) => (
-                  <span key={c.id} className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
-                    {c.name}
-                  </span>
-                ))
-              ) : (
-                <div className="text-xs text-slate-500">Belum ada kategori.</div>
-              )}
-            </div>
-          </div>
-        </div>
-        </div>
 
       {open ? (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
@@ -375,6 +380,27 @@ export default function Items() {
                 <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm" onClick={() => setEdit(null)}>Batal</button>
                 <button disabled={saving} className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm disabled:opacity-60" onClick={onUpdate}>
                   {saving ? "Menyimpan..." : "Simpan"}
+                </button>
+              </div>
+            </div>
+          </ModalPanel>
+        </div>
+      ) : null}
+
+      {confirmDel ? (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <ModalPanel>
+            <div className="w-full max-w-md rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5 mx-auto">
+              <div className="text-lg font-semibold">Hapus Barang</div>
+              <div className="mt-2 text-sm text-slate-600">
+                Yakin ingin menghapus <span className="font-medium">{confirmDel.name}</span>?
+              </div>
+              <div className="mt-5 flex justify-end gap-2">
+                <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm" onClick={() => setConfirmDel(null)}>
+                  Batal
+                </button>
+                <button disabled={saving} className="rounded-xl bg-rose-600 text-white px-3 py-2 text-sm disabled:opacity-60" onClick={onDelete}>
+                  {saving ? "Menghapus..." : "Hapus"}
                 </button>
               </div>
             </div>
