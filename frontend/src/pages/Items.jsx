@@ -1,0 +1,246 @@
+import { useEffect, useMemo, useState } from "react";
+import Layout from "../components/Layout.jsx";
+import { apiFetch } from "../lib/api.js";
+import { getUser } from "../lib/auth.js";
+
+function canManage(role) {
+  return role === "ADMIN" || role === "PETUGAS_TU";
+}
+
+export default function Items() {
+  const user = getUser();
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // create item modal state
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ code: "", name: "", categoryId: "" });
+  const [saving, setSaving] = useState(false);
+
+  async function load() {
+    setLoading(true);
+    setError("");
+    try {
+      const [i, c] = await Promise.all([apiFetch("/api/items"), apiFetch("/api/categories")]);
+      setItems(i.data);
+      setCategories(c.data);
+      setForm((f) => ({ ...f, categoryId: c.data?.[0]?.id || "" }));
+    } catch (e) {
+      setError(e?.message || "Gagal memuat data");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((it) => `${it.code} ${it.name} ${it.category?.name || ""}`.toLowerCase().includes(q));
+  }, [items, query]);
+
+  async function onCreate() {
+    setSaving(true);
+    setError("");
+    try {
+      await apiFetch("/api/items", { method: "POST", body: form });
+      setOpen(false);
+      setForm({ code: "", name: "", categoryId: categories?.[0]?.id || "" });
+      await load();
+    } catch (e) {
+      setError(e?.message || "Gagal menyimpan");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Layout
+      title="Master Barang"
+      subtitle="Monitoring stok real-time dari transaksi masuk/keluar dan peminjaman."
+      actions={
+        <>
+          <button
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+            onClick={() => window.print()}
+          >
+            Cetak
+          </button>
+          {canManage(user?.role) ? (
+            <button
+              className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800"
+              onClick={() => setOpen(true)}
+            >
+              + Tambah Barang
+            </button>
+          ) : null}
+        </>
+      }
+    >
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="md:col-span-2">
+          <div className="flex gap-2 items-center">
+            <input
+              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              placeholder="Cari kode/nama/kategori..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <button
+              className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+              onClick={load}
+              disabled={loading}
+            >
+              Refresh
+            </button>
+          </div>
+
+          {error ? <div className="mt-3 text-sm text-red-600">{error}</div> : null}
+
+          <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="text-left font-medium px-3 py-2">Kode</th>
+                  <th className="text-left font-medium px-3 py-2">Nama</th>
+                  <th className="text-left font-medium px-3 py-2">Kategori</th>
+                  <th className="text-right font-medium px-3 py-2">Stok</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-6 text-center text-slate-500">
+                      Memuat...
+                    </td>
+                  </tr>
+                ) : filtered.length ? (
+                  filtered.map((it) => (
+                    <tr key={it.id} className="border-t border-slate-100 hover:bg-slate-50">
+                      <td className="px-3 py-2 font-mono text-xs">{it.code}</td>
+                      <td className="px-3 py-2 font-medium">{it.name}</td>
+                      <td className="px-3 py-2 text-slate-600">{it.category?.name || "-"}</td>
+                      <td className="px-3 py-2 text-right">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ring-1 ${
+                            it.minStock && it.stock <= it.minStock
+                              ? "bg-rose-50 text-rose-700 ring-rose-200"
+                              : "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                          }`}
+                        >
+                          {it.stock}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-6 text-center text-slate-500">
+                      Tidak ada data.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="md:col-span-1">
+          <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-indigo-600 to-cyan-500 text-white p-4">
+            <div className="text-xs opacity-90">Total Item</div>
+            <div className="mt-1 text-3xl font-semibold">{items.length}</div>
+            <div className="mt-2 text-xs opacity-90">
+              Tip: gunakan fitur cetak untuk laporan stok sederhana.
+            </div>
+          </div>
+
+          <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="text-sm font-semibold">Kategori</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {categories.length ? (
+                categories.map((c) => (
+                  <span key={c.id} className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                    {c.name}
+                  </span>
+                ))
+              ) : (
+                <div className="text-xs text-slate-500">Belum ada kategori.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {open ? (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-lg font-semibold">Tambah Barang</div>
+                <div className="text-sm text-slate-600">Akan muncul di master stok.</div>
+              </div>
+              <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3">
+              <div>
+                <label className="text-xs font-medium text-slate-600">Kode</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  value={form.code}
+                  onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+                  placeholder="BRG-001"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Nama</label>
+                <input
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Laptop / Kursi / Proyektor"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-slate-600">Kategori</label>
+                <select
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white"
+                  value={form.categoryId}
+                  onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
+                >
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm" onClick={() => setOpen(false)}>
+                Batal
+              </button>
+              <button
+                disabled={saving}
+                className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm disabled:opacity-60"
+                onClick={onCreate}
+              >
+                {saving ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </Layout>
+  );
+}
+

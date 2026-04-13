@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Items from "./pages/Items.jsx";
+import Loans from "./pages/Loans.jsx";
 import { getToken } from "./lib/api.js";
 
 function RequireAuth({ children }) {
@@ -18,6 +20,22 @@ export default function App() {
         element={
           <RequireAuth>
             <Dashboard />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/master/items"
+        element={
+          <RequireAuth>
+            <Items />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/loans"
+        element={
+          <RequireAuth>
+            <Loans />
           </RequireAuth>
         }
       />
