@@ -87,3 +87,17 @@ itemsRouter.put(
   },
 );
 
+itemsRouter.delete(
+  "/:id",
+  requireRole("ADMIN", "PETUGAS_TU"),
+  validate(z.object({ params: z.object({ id: z.string().min(1) }) })),
+  async (req, res, next) => {
+    try {
+      await prisma.item.delete({ where: { id: req.validated.params.id } });
+      res.json({ ok: true });
+    } catch (e) {
+      next(e);
+    }
+  },
+);
+
