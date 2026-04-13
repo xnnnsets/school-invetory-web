@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { consumeRedirectAfterLogin, fetchMe, login } from "../lib/auth";
 import { useToast } from "../components/Toast.jsx";
-import { LockKeyhole } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 
 export default function Login() {
   const nav = useNavigate();
   const toast = useToast();
   const [email, setEmail] = useState("admin@sekolah.test");
   const [password, setPassword] = useState("Password123!");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -59,7 +60,7 @@ export default function Login() {
         <form onSubmit={onSubmit} className="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6 space-y-4">
           <div>
             <h2 className="text-xl font-semibold">Masuk</h2>
-            <p className="text-sm text-slate-600">Gunakan akun yang sudah disediakan (seed).</p>
+            <p className="text-sm text-slate-600">Gunakan akun yang sudah disediakan.</p>
           </div>
 
           <div className="space-y-2">
@@ -74,13 +75,23 @@ export default function Login() {
 
           <div className="space-y-2">
             <label className="block text-sm font-medium">Password</label>
-            <input
-              className="w-full border rounded-xl px-3 py-2"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
+            <div className="relative">
+              <input
+                className="w-full border rounded-xl px-3 py-2 pr-10"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 px-3 text-slate-600 hover:text-slate-900"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
 
           {error ? <div className="text-sm text-red-600">{error}</div> : null}
@@ -92,10 +103,6 @@ export default function Login() {
           >
             {loading ? "Memproses..." : "Masuk"}
           </button>
-
-          <div className="text-xs text-slate-500">
-            Default password: <span className="font-mono">Password123!</span>
-          </div>
         </form>
       </div>
     </div>
