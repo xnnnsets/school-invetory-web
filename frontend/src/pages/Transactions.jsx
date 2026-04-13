@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import Layout from "../components/Layout.jsx";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
-import { Page, ModalPanel } from "../components/Motion.jsx";
+import { ModalPanel } from "../components/Motion.jsx";
 import { Filter, Plus, Printer, RefreshCw, X } from "lucide-react";
 
 function canManage(role) {
@@ -17,11 +16,11 @@ function formatDateTime(dt) {
   }
 }
 
-export default function Transactions() {
+export default function Transactions({ mode }) {
   const user = getUser();
   const manage = canManage(user?.role);
 
-  const [tab, setTab] = useState("inbound");
+  const tab = mode;
   const activeLabel = tab === "inbound" ? "Barang Masuk" : "Barang Keluar";
 
   const [items, setItems] = useState([]);
@@ -97,61 +96,37 @@ export default function Transactions() {
   }
 
   return (
-    <Layout
-      title="Transaksi"
-      subtitle="Catat barang masuk & keluar. Stok akan ter-update otomatis."
-      actions={
-        <>
-          <button
-            className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
-            onClick={() => window.print()}
-          >
+    <div className="max-w-6xl">
+      <div className="mb-1 text-2xl font-semibold">{activeLabel}</div>
+      <div className="text-sm text-slate-600">
+        {tab === "inbound" ? "Pencatatan barang masuk (menambah stok)." : "Pencatatan barang keluar (mengurangi stok)."}
+      </div>
+
+      <div className="mt-5 flex flex-col md:flex-row gap-2">
+        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => window.print()}>
+          <span className="inline-flex items-center gap-2">
+            <Printer className="h-4 w-4" /> Cetak
+          </span>
+        </button>
+        <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
+          <span className="inline-flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" /> Refresh
+          </span>
+        </button>
+        {manage ? (
+          <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800" onClick={() => setOpen(true)}>
             <span className="inline-flex items-center gap-2">
-              <Printer className="h-4 w-4" /> Cetak
+              <Plus className="h-4 w-4" /> Tambah
             </span>
           </button>
-          <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
-            <span className="inline-flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" /> Refresh
-            </span>
-          </button>
-          {manage ? (
-            <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800" onClick={() => setOpen(true)}>
-              <span className="inline-flex items-center gap-2">
-                <Plus className="h-4 w-4" /> Tambah {activeLabel}
-              </span>
-            </button>
-          ) : null}
-        </>
-      }
-    >
-      <Page>
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1">
-          <button
-            onClick={() => setTab("inbound")}
-            className={`rounded-xl px-3 py-2 text-sm transition ${
-              tab === "inbound" ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Barang Masuk
-          </button>
-          <button
-            onClick={() => setTab("outbound")}
-            className={`rounded-xl px-3 py-2 text-sm transition ${
-              tab === "outbound" ? "bg-slate-900 text-white" : "text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Barang Keluar
-          </button>
-        </div>
+        ) : null}
         <input
           className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
           placeholder="Cari catatan / barang..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        </div>
+      </div>
 
         <div className="mt-3 grid grid-cols-12 gap-2 items-end">
           <div className="col-span-12 md:col-span-3">
@@ -361,8 +336,7 @@ export default function Transactions() {
           </ModalPanel>
         </div>
       ) : null}
-      </Page>
-    </Layout>
+      </div>
   );
 }
 

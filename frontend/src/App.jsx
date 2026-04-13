@@ -7,6 +7,8 @@ import Loans from "./pages/Loans.jsx";
 import MasterData from "./pages/MasterData.jsx";
 import Transactions from "./pages/Transactions.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
+import Categories from "./pages/Categories.jsx";
+import Suppliers from "./pages/Suppliers.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -48,13 +50,13 @@ export default function App() {
 
         {/* Master */}
         <Route path="items" element={<Items />} />
-        <Route path="categories" element={<Placeholder title="Kategori Barang" subtitle="Kelola kategori barang." />} />
-        <Route path="suppliers" element={<Placeholder title="Data Supplier" subtitle="Kelola supplier." />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="suppliers" element={<Suppliers />} />
         <Route path="school" element={<Placeholder title="Data Sekolah" subtitle="Profil sekolah." />} />
 
         {/* Transactions */}
-        <Route path="inbound" element={<Transactions />} />
-        <Route path="outbound" element={<Transactions />} />
+        <Route path="inbound" element={<Transactions mode="inbound" />} />
+        <Route path="outbound" element={<Transactions mode="outbound" />} />
 
         {/* Loans/Requests */}
         <Route path="loans" element={<Loans />} />
