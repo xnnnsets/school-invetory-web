@@ -13,6 +13,7 @@ import { itemsRouter } from "./routes/items.js";
 import { inboundRouter } from "./routes/inbound.js";
 import { outboundRouter } from "./routes/outbound.js";
 import { loansRouter } from "./routes/loans.js";
+import { dashboardRouter } from "./routes/dashboard.js";
 
 requireEnv();
 
@@ -40,6 +41,7 @@ app.use("/api/items", itemsRouter);
 app.use("/api/inbound", inboundRouter);
 app.use("/api/outbound", outboundRouter);
 app.use("/api/loans", loansRouter);
+app.use("/api/dashboard", dashboardRouter);
 
 app.use(notFound);
 app.use(errorHandler);
