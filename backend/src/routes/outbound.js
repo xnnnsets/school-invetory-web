@@ -7,9 +7,9 @@ import { HttpError } from "../http/errors.js";
 
 export const outboundRouter = Router();
 
-outboundRouter.use(requireAuth, requireRole("ADMIN", "PETUGAS_TU"));
+outboundRouter.use(requireAuth);
 
-outboundRouter.get("/", async (req, res) => {
+outboundRouter.get("/", requireRole("ADMIN", "PETUGAS_TU", "KEPALA_SEKOLAH"), async (req, res) => {
   const { from, to } = req.query;
   const where = {};
   if (from || to) {
@@ -30,6 +30,7 @@ outboundRouter.get("/", async (req, res) => {
 
 outboundRouter.post(
   "/",
+  requireRole("ADMIN", "PETUGAS_TU"),
   validate(
     z.object({
       body: z.object({

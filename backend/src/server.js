@@ -20,6 +20,7 @@ import { requestsRouter } from "./routes/requests.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { reportsRouter } from "./routes/reports.js";
 import { stockAdjustmentsRouter } from "./routes/stock-adjustments.js";
+import { profileRouter } from "./routes/profile.js";
 
 requireEnv();
 
@@ -54,6 +55,7 @@ app.use("/api/requests", requestsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/reports", reportsRouter);
 app.use("/api/stock-adjustments", stockAdjustmentsRouter);
+app.use("/api/profile", profileRouter);
 
 app.use(notFound);
 app.use(errorHandler);
