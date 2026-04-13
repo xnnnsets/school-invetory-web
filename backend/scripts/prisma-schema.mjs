@@ -1,5 +1,9 @@
 import path from "node:path";
 import process from "node:process";
+import dotenv from "dotenv";
+
+// Load backend/.env so DB_PROVIDER & DATABASE_URL are available
+dotenv.config({ path: path.join(process.cwd(), ".env") });
 
 function inferProviderFromUrl(url) {
   if (!url) return null;
