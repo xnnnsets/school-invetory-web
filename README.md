@@ -89,6 +89,33 @@ Salin env contoh:
 cp backend/.env.example backend/.env
 ```
 
+#### Konfigurasi ENV (wajib)
+
+Buka `backend/.env` dan pastikan variabel berikut terisi.
+
+```env
+# Lokasi database SQLite (file akan dibuat otomatis)
+DATABASE_URL="file:./dev.db"
+
+# Secret untuk tanda tangan JWT (ubah untuk produksi)
+JWT_SECRET="dev_secret_change_me"
+
+# Port backend (opsional)
+PORT=4000
+
+# Origin frontend untuk CORS (opsional, bisa pakai wildcard saat dev)
+CORS_ORIGIN="http://localhost:5173"
+```
+
+#### Konfigurasi ENV Frontend (opsional)
+
+Secara default frontend mengarah ke `http://localhost:4000`.
+Kalau backend kamu jalan di host/port lain, buat file `frontend/.env`:
+
+```env
+VITE_API_BASE="http://localhost:4000"
+```
+
 Migrasi database + seed data:
 
 ```bash
