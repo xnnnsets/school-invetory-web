@@ -12,6 +12,7 @@ import { roomsRouter } from "./routes/rooms.js";
 import { itemsRouter } from "./routes/items.js";
 import { inboundRouter } from "./routes/inbound.js";
 import { outboundRouter } from "./routes/outbound.js";
+import { loansRouter } from "./routes/loans.js";
 
 requireEnv();
 
@@ -38,6 +39,7 @@ app.use("/api/rooms", roomsRouter);
 app.use("/api/items", itemsRouter);
 app.use("/api/inbound", inboundRouter);
 app.use("/api/outbound", outboundRouter);
+app.use("/api/loans", loansRouter);
 
 app.use(notFound);
 app.use(errorHandler);
