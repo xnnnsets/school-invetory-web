@@ -92,6 +92,36 @@ body {
   margin: 0;
 }
 
+/* Global button border-reveal (subtle) */
+button:not([data-no-reveal]) {
+  position: relative;
+  overflow: hidden;
+}
+button:not([data-no-reveal])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: rgba(255, 255, 255, 0.14);
+  transition: width 0.25s ease;
+  z-index: 0;
+}
+@media (prefers-color-scheme: dark) {
+  button:not([data-no-reveal])::after {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+button:not([data-no-reveal]):hover::after {
+  width: 100%;
+}
+button:not([data-no-reveal]):disabled::after {
+  width: 0;
+}
+button:not([data-no-reveal]) > * {
+  position: relative;
+  z-index: 1;
+}
+
 #root {
   width: 1126px;
   max-width: 100%;
