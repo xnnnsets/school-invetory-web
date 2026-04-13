@@ -51,6 +51,8 @@ model User {
 
   inboundCreated  Inbound[]  @relation("InboundCreatedBy")
   outboundCreated Outbound[] @relation("OutboundCreatedBy")
+
+  stockAdjustments StockAdjustment[]
 }
 
 model Category {
@@ -106,6 +108,8 @@ model Item {
   outboundLines OutboundLine[]
   loanLines     LoanLine[]
   requestLines  RequestLine[]
+
+  stockAdjustments StockAdjustment[]
 }
 
 model Inbound {
@@ -233,6 +237,17 @@ model Notification {
   title     String
   body      String?
   isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model StockAdjustment {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id])
+  delta     Int
+  reason    String?
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
   createdAt DateTime @default(now())
 }
 
