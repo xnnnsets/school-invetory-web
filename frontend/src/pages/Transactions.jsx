@@ -113,11 +113,17 @@ export default function Transactions({ mode }) {
     setSaving(true);
     setError("");
     try {
+      const cleanLines = (lines || [])
+        .map((l) => ({ itemId: l.itemId, qty: Number(l.qty) }))
+        .filter((l) => l.itemId && Number.isFinite(l.qty) && l.qty > 0);
+      if (!cleanLines.length) throw new Error("Minimal 1 barang dengan qty > 0");
+      if (tab === "outbound" && !recipient.trim()) throw new Error("Penerima wajib diisi");
+
       const endpoint = tab === "inbound" ? "/api/inbound" : "/api/outbound";
       const body =
         tab === "inbound"
-          ? { note: note || undefined, supplierId: supplierId || null, lines }
-          : { recipient: recipient || undefined, note: note || undefined, lines };
+          ? { note: note || undefined, supplierId: supplierId || null, lines: cleanLines }
+          : { recipient: recipient || undefined, note: note || undefined, lines: cleanLines };
       await apiFetch(endpoint, { method: "POST", body });
       setOpen(false);
       setNote("");

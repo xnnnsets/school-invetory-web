@@ -54,6 +54,12 @@ export default function Items() {
     setSaving(true);
     setError("");
     try {
+      if (!form.code?.trim() || !form.name?.trim()) {
+        throw new Error("Kode dan Nama wajib diisi");
+      }
+      if (!form.categoryId) {
+        throw new Error("Kategori wajib dipilih (buat kategori dulu jika kosong)");
+      }
       await apiFetch("/api/items", {
         method: "POST",
         body: { ...form, roomId: form.roomId || null },
@@ -73,6 +79,12 @@ export default function Items() {
     setSaving(true);
     setError("");
     try {
+      if (!edit.code?.trim() || !edit.name?.trim()) {
+        throw new Error("Kode dan Nama wajib diisi");
+      }
+      if (!edit.categoryId) {
+        throw new Error("Kategori wajib dipilih");
+      }
       await apiFetch(`/api/items/${edit.id}`, {
         method: "PUT",
         body: { ...edit, roomId: edit.roomId || null },

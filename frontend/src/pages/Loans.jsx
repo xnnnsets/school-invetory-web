@@ -44,6 +44,7 @@ export default function Loans() {
     d.setDate(d.getDate() + 7);
     return d.toISOString().slice(0, 10);
   });
+  const [view, setView] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -126,6 +127,10 @@ export default function Loans() {
     } catch (e) {
       setError(e?.message || "Gagal memproses");
     }
+  }
+
+  function openView(ln) {
+    setView(ln);
   }
 
   return (
@@ -231,7 +236,11 @@ export default function Loans() {
                   <td className="px-3 py-2 text-right">
                     {canProcess ? (
                       <div className="inline-flex gap-2">
-                        <button className="rounded-lg border border-slate-200 p-2 hover:bg-white" title="Lihat">
+                        <button
+                          className="rounded-lg border border-slate-200 p-2 hover:bg-white"
+                          title="Lihat"
+                          onClick={() => openView(ln)}
+                        >
                           <Eye className="h-4 w-4" />
                         </button>
                         {ln.status === "PENDING" ? (
@@ -366,6 +375,117 @@ export default function Loans() {
               </button>
             </div>
           </div>
+          </ModalPanel>
+        </div>
+      ) : null}
+
+      {view ? (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <ModalPanel>
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-lg font-semibold">Detail Peminjaman</div>
+                  <div className="text-sm text-slate-600">
+                    {view.requester?.name || "-"} • {view.requester?.email || "-"}
+                  </div>
+                </div>
+                <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setView(null)} aria-label="Tutup">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                <div className="rounded-2xl border border-slate-200 p-3">
+                  <div className="text-xs text-slate-500">Status</div>
+                  <div className="mt-1">
+                    {overdueIds.has(view.id) ? (
+                      <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-700 ring-1 ring-rose-200">
+                        Terlambat
+                      </span>
+                    ) : (
+                      statusPill(view.status)
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-slate-200 p-3">
+                    <div className="text-xs text-slate-500">Tanggal Pinjam</div>
+                    <div className="mt-1 text-sm font-medium">
+                      {view.approvedAt ? new Date(view.approvedAt).toISOString().slice(0, 10) : "-"}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 p-3">
+                    <div className="text-xs text-slate-500">Target Kembali</div>
+                    <div className="mt-1 text-sm font-medium">
+                      {view.dueAt ? new Date(view.dueAt).toISOString().slice(0, 10) : "-"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 p-3">
+                  <div className="text-sm font-semibold">Barang</div>
+                  <div className="mt-2 space-y-1">
+                    {(view.lines || []).map((x) => (
+                      <div key={x.id} className="text-sm flex items-center justify-between">
+                        <div className="font-medium">{x.item?.name || "-"}</div>
+                        <div className="text-slate-600">
+                          {x.qty} {x.item?.unit || "unit"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {canProcess ? (
+                <div className="mt-5 flex justify-end gap-2">
+                  <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm" onClick={() => setView(null)}>
+                    Tutup
+                  </button>
+                  {view.status === "PENDING" ? (
+                    <>
+                      <button
+                        className="rounded-xl bg-emerald-600 text-white px-3 py-2 text-sm hover:bg-emerald-500"
+                        onClick={async () => {
+                          await action(view.id, "approve");
+                          setView(null);
+                        }}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="rounded-xl bg-rose-600 text-white px-3 py-2 text-sm hover:bg-rose-500"
+                        onClick={async () => {
+                          await action(view.id, "reject");
+                          setView(null);
+                        }}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : null}
+                  {view.status === "APPROVED" ? (
+                    <button
+                      className="rounded-xl bg-blue-600 text-white px-3 py-2 text-sm hover:bg-blue-500"
+                      onClick={async () => {
+                        await action(view.id, "return");
+                        setView(null);
+                      }}
+                    >
+                      Kembalikan
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mt-5 flex justify-end">
+                  <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm" onClick={() => setView(null)}>
+                    Tutup
+                  </button>
+                </div>
+              )}
+            </div>
           </ModalPanel>
         </div>
       ) : null}
