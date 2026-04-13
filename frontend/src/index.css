@@ -92,12 +92,12 @@ body {
   margin: 0;
 }
 
-/* Global button border-reveal (subtle) */
-button:not([data-no-reveal]) {
+/* Border-reveal hover effect (apply per-button) */
+.btn-border-reveal {
   position: relative;
   overflow: hidden;
 }
-button:not([data-no-reveal])::after {
+.btn-border-reveal::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -107,17 +107,17 @@ button:not([data-no-reveal])::after {
   z-index: 0;
 }
 @media (prefers-color-scheme: dark) {
-  button:not([data-no-reveal])::after {
+  .btn-border-reveal::after {
     background: rgba(255, 255, 255, 0.08);
   }
 }
-button:not([data-no-reveal]):hover::after {
+.btn-border-reveal:hover::after {
   width: 100%;
 }
-button:not([data-no-reveal]):disabled::after {
+.btn-border-reveal:disabled::after {
   width: 0;
 }
-button:not([data-no-reveal]) > * {
+.btn-border-reveal > * {
   position: relative;
   z-index: 1;
 }

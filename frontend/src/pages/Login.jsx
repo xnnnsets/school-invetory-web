@@ -85,7 +85,7 @@ export default function Login() {
               />
               <button
                 type="button"
-                className="absolute inset-y-0 right-0 px-3 text-slate-600 hover:text-slate-900"
+                className="absolute inset-y-0 right-2 inline-flex items-center justify-center text-slate-600 hover:text-slate-900"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
@@ -98,7 +98,7 @@ export default function Login() {
 
           <button
             disabled={loading}
-            className="w-full bg-slate-900 text-white rounded-xl py-2 disabled:opacity-60"
+            className="w-full bg-slate-900 text-white rounded-xl py-2 disabled:opacity-60 btn-border-reveal"
             type="submit"
           >
             {loading ? "Memproses..." : "Masuk"}
