@@ -9,6 +9,7 @@
     "postinstall": "node scripts/prisma.mjs generate",
     "db:migrate": "node scripts/prisma.mjs migrate dev",
     "db:deploy": "node scripts/prisma.mjs migrate deploy",
+    "db:push": "node scripts/prisma.mjs db push",
     "db:seed": "node prisma/seed.js",
     "prisma:generate": "node scripts/prisma.mjs generate"
   },

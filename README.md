@@ -256,6 +256,19 @@ Minimal ENV backend di Railway:
 - `PORT` (Railway biasanya otomatis, tapi backend sudah membaca `PORT`)
 - `CLIENT_ORIGIN` (URL frontend)
 
+Inisialisasi DB (wajib dilakukan sekali untuk database baru):
+
+- Jika kamu pakai **Postgres/MySQL** dan belum ada tabel, jalankan:
+
+```bash
+npm -w backend run db:push
+npm -w backend run db:seed
+```
+
+Catatan:
+- `db:push` akan membuat schema tabel sesuai `schema.<provider>.prisma` tanpa history migration.
+- Ini paling aman untuk “bootstrap” DB baru di Railway ketika provider berbeda dari environment dev sebelumnya.
+
 Frontend (2 opsi):
 
 - **Opsi A (disarankan untuk Railway, paling simpel)**: frontend panggil backend via URL publik
