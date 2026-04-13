@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import Layout from "../components/Layout.jsx";
 import { apiFetch } from "../lib/api.js";
 import { getUser } from "../lib/auth.js";
+import { Page, ModalPanel } from "../components/Motion.jsx";
+import { Filter, Plus, Printer, RefreshCw, X } from "lucide-react";
 
 function canManage(role) {
   return role === "ADMIN" || role === "PETUGAS_TU";
@@ -34,14 +36,20 @@ export default function Transactions() {
   const [note, setNote] = useState("");
   const [supplierId, setSupplierId] = useState("");
   const [lines, setLines] = useState([{ itemId: "", qty: 1 }]);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
 
   async function load() {
     setLoading(true);
     setError("");
     try {
       const endpoint = tab === "inbound" ? "/api/inbound" : "/api/outbound";
+      const qs = new URLSearchParams();
+      if (from) qs.set("from", new Date(from).toISOString());
+      if (to) qs.set("to", new Date(to).toISOString());
+      const url = qs.toString() ? `${endpoint}?${qs}` : endpoint;
       const [r, i, s] = await Promise.all([
-        apiFetch(endpoint),
+        apiFetch(url),
         apiFetch("/api/items"),
         tab === "inbound" ? apiFetch("/api/suppliers") : Promise.resolve({ data: [] }),
       ]);
@@ -94,21 +102,31 @@ export default function Transactions() {
       subtitle="Catat barang masuk & keluar. Stok akan ter-update otomatis."
       actions={
         <>
-          <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={() => window.print()}>
-            Cetak
+          <button
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+            onClick={() => window.print()}
+          >
+            <span className="inline-flex items-center gap-2">
+              <Printer className="h-4 w-4" /> Cetak
+            </span>
           </button>
           <button className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50" onClick={load}>
-            Refresh
+            <span className="inline-flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </span>
           </button>
           {manage ? (
             <button className="rounded-xl bg-slate-900 text-white px-3 py-2 text-sm hover:bg-slate-800" onClick={() => setOpen(true)}>
-              + Tambah {activeLabel}
+              <span className="inline-flex items-center gap-2">
+                <Plus className="h-4 w-4" /> Tambah {activeLabel}
+              </span>
             </button>
           ) : null}
         </>
       }
     >
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
+      <Page>
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
         <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1">
           <button
             onClick={() => setTab("inbound")}
@@ -133,7 +151,48 @@ export default function Transactions() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-      </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-12 gap-2 items-end">
+          <div className="col-span-12 md:col-span-3">
+            <label className="text-xs font-medium text-slate-600 inline-flex items-center gap-2">
+              <Filter className="h-4 w-4" /> Dari tanggal
+            </label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+          </div>
+          <div className="col-span-12 md:col-span-3">
+            <label className="text-xs font-medium text-slate-600">Sampai tanggal</label>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </div>
+          <div className="col-span-12 md:col-span-6 flex gap-2">
+            <button
+              className="mt-6 rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+              onClick={load}
+            >
+              Terapkan Filter
+            </button>
+            <button
+              className="mt-6 rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+              onClick={() => {
+                setFrom("");
+                setTo("");
+                setTimeout(load, 0);
+              }}
+            >
+              Reset
+            </button>
+          </div>
+        </div>
 
       {error ? <div className="mt-3 text-sm text-red-600">{error}</div> : null}
 
@@ -187,16 +246,17 @@ export default function Transactions() {
 
       {open ? (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="text-lg font-semibold">Tambah {activeLabel}</div>
-                <div className="text-sm text-slate-600">Stok akan berubah otomatis setelah disimpan.</div>
+          <ModalPanel>
+            <div className="w-full max-w-2xl rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 p-5 mx-auto">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-lg font-semibold">Tambah {activeLabel}</div>
+                  <div className="text-sm text-slate-600">Stok akan berubah otomatis setelah disimpan.</div>
+                </div>
+                <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)} aria-label="Tutup">
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button className="rounded-lg px-2 py-1 hover:bg-slate-100" onClick={() => setOpen(false)}>
-                ✕
-              </button>
-            </div>
 
             <div className="mt-4 grid gap-3">
               {tab === "inbound" ? (
@@ -297,9 +357,11 @@ export default function Transactions() {
                 {saving ? "Menyimpan..." : "Simpan"}
               </button>
             </div>
-          </div>
+            </div>
+          </ModalPanel>
         </div>
       ) : null}
+      </Page>
     </Layout>
   );
 }
