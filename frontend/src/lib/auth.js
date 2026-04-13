@@ -1,4 +1,4 @@
-import { apiFetch, setToken } from "./api";
+import { apiFetch, getToken, setToken } from "./api";
 
 export function getUser() {
   const raw = localStorage.getItem("user");
@@ -23,7 +23,9 @@ export function logout() {
 }
 
 export async function fetchMe() {
-  const res = await apiFetch("/api/auth/me");
+  const token = getToken();
+  if (!token) throw new Error("NO_TOKEN");
+  const res = await apiFetch("/api/auth/me", { skipUnauthorizedHandler: true });
   setUser(res.user);
   return res.user;
 }

@@ -23,7 +23,9 @@ export default function App() {
   useEffect(() => {
     setOnUnauthorized(() => {
       logout();
-      window.location.href = "/login";
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     });
   }, []);
 

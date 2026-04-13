@@ -15,7 +15,7 @@ export function setOnUnauthorized(handler) {
   onUnauthorized = handler;
 }
 
-export async function apiFetch(path, { method = "GET", body, token } = {}) {
+export async function apiFetch(path, { method = "GET", body, token, skipUnauthorizedHandler = false } = {}) {
   const headers = { "content-type": "application/json" };
   const t = token ?? getToken();
   if (t) headers.authorization = `Bearer ${t}`;
@@ -29,7 +29,7 @@ export async function apiFetch(path, { method = "GET", body, token } = {}) {
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
-    if (res.status === 401 && typeof onUnauthorized === "function") {
+    if (!skipUnauthorizedHandler && res.status === 401 && typeof onUnauthorized === "function") {
       onUnauthorized();
     }
     const message = data?.message || `HTTP ${res.status}`;

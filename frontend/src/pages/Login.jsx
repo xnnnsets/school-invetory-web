@@ -13,7 +13,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // If already logged in, go to redirect target
+    // If already logged in, go to redirect target (avoid reload loop on 401)
     fetchMe()
       .then(() => nav(consumeRedirectAfterLogin(), { replace: true }))
       .catch(() => {});
