@@ -28,3 +28,14 @@ export async function fetchMe() {
   return res.user;
 }
 
+export function setRedirectAfterLogin(pathname) {
+  if (!pathname) return;
+  localStorage.setItem("redirectAfterLogin", pathname);
+}
+
+export function consumeRedirectAfterLogin() {
+  const v = localStorage.getItem("redirectAfterLogin") || "/";
+  localStorage.removeItem("redirectAfterLogin");
+  return v;
+}
+

@@ -1,5 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
 
+let onUnauthorized = null;
+
 export function getToken() {
   return localStorage.getItem("accessToken");
 }
@@ -7,6 +9,10 @@ export function getToken() {
 export function setToken(token) {
   if (!token) localStorage.removeItem("accessToken");
   else localStorage.setItem("accessToken", token);
+}
+
+export function setOnUnauthorized(handler) {
+  onUnauthorized = handler;
 }
 
 export async function apiFetch(path, { method = "GET", body, token } = {}) {
@@ -23,6 +29,9 @@ export async function apiFetch(path, { method = "GET", body, token } = {}) {
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
+    if (res.status === 401 && typeof onUnauthorized === "function") {
+      onUnauthorized();
+    }
     const message = data?.message || `HTTP ${res.status}`;
     throw new Error(message);
   }

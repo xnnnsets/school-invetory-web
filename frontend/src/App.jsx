@@ -1,19 +1,32 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Items from "./pages/Items.jsx";
 import Loans from "./pages/Loans.jsx";
 import MasterData from "./pages/MasterData.jsx";
 import Transactions from "./pages/Transactions.jsx";
-import { getToken } from "./lib/api.js";
+import { getToken, setOnUnauthorized } from "./lib/api.js";
+import { logout, setRedirectAfterLogin } from "./lib/auth.js";
+import { useEffect } from "react";
 
 function RequireAuth({ children }) {
   const token = getToken();
-  if (!token) return <Navigate to="/login" replace />;
+  const loc = useLocation();
+  if (!token) {
+    setRedirectAfterLogin(loc.pathname);
+    return <Navigate to="/login" replace />;
+  }
   return children;
 }
 
 export default function App() {
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      logout();
+      window.location.href = "/login";
+    });
+  }, []);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
