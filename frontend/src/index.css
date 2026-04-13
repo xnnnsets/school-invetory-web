@@ -8,6 +8,34 @@ body,
   height: 100%;
 }
 
+@media print {
+  body {
+    background: white !important;
+  }
+
+  /* Hide navigation and controls */
+  aside,
+  button,
+  input,
+  select {
+    display: none !important;
+  }
+
+  /* Ensure main content uses full width */
+  main,
+  .max-w-7xl,
+  .max-w-5xl {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .shadow,
+  .shadow-sm,
+  .shadow-lg {
+    box-shadow: none !important;
+  }
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
