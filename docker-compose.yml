@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      PORT: 4000
+      DATABASE_URL: "file:/data/app.db"
+      JWT_SECRET: "dev_secret_change_me"
+      # If you deploy frontend separately, set CLIENT_ORIGIN accordingly.
+      CLIENT_ORIGIN: "http://localhost:8080"
+    volumes:
+      - inventaris_db:/data
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  inventaris_db:
+

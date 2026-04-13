@@ -103,13 +103,14 @@ JWT_SECRET="dev_secret_change_me"
 # Port backend (opsional)
 PORT=4000
 
-# Origin frontend untuk CORS (opsional, bisa pakai wildcard saat dev)
-CORS_ORIGIN="http://localhost:5173"
+# Origin frontend untuk CORS (opsional)
+# Bisa pakai salah satu: CLIENT_ORIGIN atau CORS_ORIGIN
+CLIENT_ORIGIN="http://localhost:5173"
 ```
 
 #### Konfigurasi ENV Frontend (opsional)
 
-Secara default frontend mengarah ke `http://localhost:4000`.
+Secara default frontend akan memanggil API dengan **same-origin** (mis. lewat reverse proxy `/api`).
 Kalau backend kamu jalan di host/port lain, buat file `frontend/.env`:
 
 ```env
@@ -196,4 +197,52 @@ Semua endpoint berada di prefix `/api/*` dan butuh login (JWT) kecuali `/api/aut
 
 - Jika ada error install dependency (mis. jaringan/DNS), jalankan ulang `npm install`.
 - Untuk reset data saat dev, hapus file SQLite (lokasi mengikuti `DATABASE_URL` di `backend/.env`), lalu jalankan migrasi + seed lagi.
+
+## Deploy (Railway / Docker / Cloud mana pun)
+
+### Rekomendasi arsitektur
+
+- **Paling portable**: jalankan **frontend + backend** lewat **Docker** dan letakkan di belakang 1 domain (same-origin).
+  - Frontend akan proxy ke backend via path `/api/*`
+  - Ini bikin `VITE_API_BASE` tidak wajib
+- **Database**:
+  - Dev: SQLite ok
+  - Production: lebih aman pakai **Postgres** (kalau aplikasi dipakai serius / multi-instance).
+    Saat ini schema Prisma menggunakan `sqlite` provider.
+
+### Deploy dengan Docker (paling mudah)
+
+Di root project:
+
+```bash
+docker compose up --build
+```
+
+Lalu akses:
+
+- Frontend: `http://localhost:8080`
+- Backend health: `http://localhost:4000/health`
+
+Catatan:
+- Data SQLite akan tersimpan di volume `inventaris_db` (persistent).
+- Ubah `JWT_SECRET` dan `CLIENT_ORIGIN` untuk environment production.
+
+### Deploy ke Railway (gambaran)
+
+Opsi umum:
+
+- **2 service**:
+  - Service 1: backend (Node)
+  - Service 2: frontend (static/nginx)
+
+Minimal ENV backend di Railway:
+
+- `DATABASE_URL` (untuk SQLite butuh storage persistent; jika tidak, data akan hilang saat restart)
+- `JWT_SECRET`
+- `PORT` (Railway biasanya otomatis, tapi backend sudah membaca `PORT`)
+- `CLIENT_ORIGIN` (URL frontend)
+
+Frontend:
+- Kalau kamu host frontend terpisah (domain lain), set `VITE_API_BASE` ke URL backend (mis. `https://xxx.up.railway.app`)
+
 

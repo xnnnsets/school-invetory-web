@@ -1,4 +1,5 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+// Prefer same-origin in production (behind reverse proxy), but allow override.
+const API_BASE = import.meta.env.VITE_API_BASE || "";
 
 let onUnauthorized = null;
 
