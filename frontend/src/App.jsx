@@ -13,6 +13,8 @@ import Requests from "./pages/Requests.jsx";
 import History from "./pages/History.jsx";
 import Reports from "./pages/Reports.jsx";
 import Notifications from "./pages/Notifications.jsx";
+import Users from "./pages/Users.jsx";
+import School from "./pages/School.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -50,13 +52,13 @@ export default function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="users" element={<Placeholder title="Kelola Pengguna" subtitle="Manajemen akun & role." />} />
+        <Route path="users" element={<Users />} />
 
         {/* Master */}
         <Route path="items" element={<Items />} />
         <Route path="categories" element={<Categories />} />
         <Route path="suppliers" element={<Suppliers />} />
-        <Route path="school" element={<Placeholder title="Data Sekolah" subtitle="Profil sekolah." />} />
+        <Route path="school" element={<School />} />
 
         {/* Transactions */}
         <Route path="inbound" element={<Transactions mode="inbound" />} />
