@@ -16,6 +16,8 @@ import { loansRouter } from "./routes/loans.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { usersRouter } from "./routes/users.js";
 import { schoolRouter } from "./routes/school.js";
+import { requestsRouter } from "./routes/requests.js";
+import { notificationsRouter } from "./routes/notifications.js";
 
 requireEnv();
 
@@ -46,6 +48,8 @@ app.use("/api/loans", loansRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/school", schoolRouter);
+app.use("/api/requests", requestsRouter);
+app.use("/api/notifications", notificationsRouter);
 
 app.use(notFound);
 app.use(errorHandler);

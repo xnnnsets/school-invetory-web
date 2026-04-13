@@ -36,6 +36,11 @@ model User {
 
   loansRequested Loan[] @relation("LoanRequester")
   loansHandled   Loan[] @relation("LoanHandler")
+
+  requestsRequested Request[] @relation("RequestRequester")
+  requestsHandled   Request[] @relation("RequestHandler")
+
+  notifications Notification[]
 }
 
 model Category {
@@ -88,6 +93,7 @@ model Item {
   inboundLines  InboundLine[]
   outboundLines OutboundLine[]
   loanLines     LoanLine[]
+  requestLines  RequestLine[]
 }
 
 model Inbound {
@@ -164,5 +170,51 @@ model LoanLine {
   itemId String
   item   Item   @relation(fields: [itemId], references: [id])
   qty    Int
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FULFILLED
+}
+
+model Request {
+  id          String        @id @default(cuid())
+  status      RequestStatus @default(PENDING)
+  requestedAt DateTime      @default(now())
+  approvedAt  DateTime?
+  fulfilledAt DateTime?
+  note        String?
+
+  requesterId String
+  requester   User          @relation("RequestRequester", fields: [requesterId], references: [id])
+
+  handledById String?
+  handledBy   User?         @relation("RequestHandler", fields: [handledById], references: [id])
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  lines RequestLine[]
+}
+
+model RequestLine {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  itemId    String
+  item      Item    @relation(fields: [itemId], references: [id])
+  qty       Int
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
