@@ -1,0 +1,16 @@
+node_modules
+.DS_Store
+
+# env
+.env
+.env.*
+!.env.example
+
+# build
+dist
+build
+
+# prisma
+*.db
+*.db-journal
+
