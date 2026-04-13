@@ -60,7 +60,7 @@ app.use("/api/profile", profileRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
+app.listen(env.PORT, "0.0.0.0", () => {
   // eslint-disable-next-line no-console
   console.log(`API running on http://localhost:${env.PORT}`);
 });
