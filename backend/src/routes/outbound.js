@@ -20,7 +20,10 @@ outboundRouter.get("/", async (req, res) => {
   const rows = await prisma.outbound.findMany({
     where,
     orderBy: { date: "desc" },
-    include: { lines: { include: { item: true } } },
+    include: {
+      createdBy: { select: { id: true, name: true, role: true } },
+      lines: { include: { item: true } },
+    },
   });
   res.json({ data: rows });
 });
@@ -31,6 +34,7 @@ outboundRouter.post(
     z.object({
       body: z.object({
         date: z.string().datetime().optional(),
+        recipient: z.string().optional(),
         note: z.string().optional(),
         lines: z
           .array(
@@ -56,10 +60,15 @@ outboundRouter.post(
         const outbound = await tx.outbound.create({
           data: {
             date: b.date ? new Date(b.date) : undefined,
+            recipient: b.recipient,
             note: b.note,
+            createdById: req.user.id,
             lines: { create: b.lines.map((l) => ({ itemId: l.itemId, qty: l.qty })) },
           },
-          include: { lines: { include: { item: true } } },
+          include: {
+            createdBy: { select: { id: true, name: true, role: true } },
+            lines: { include: { item: true } },
+          },
         });
 
         for (const ln of b.lines) {

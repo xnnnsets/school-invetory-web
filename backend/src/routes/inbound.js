@@ -20,7 +20,11 @@ inboundRouter.get("/", async (req, res) => {
   const rows = await prisma.inbound.findMany({
     where,
     orderBy: { date: "desc" },
-    include: { supplier: true, lines: { include: { item: true } } },
+    include: {
+      supplier: true,
+      createdBy: { select: { id: true, name: true, role: true } },
+      lines: { include: { item: true } },
+    },
   });
   res.json({ data: rows });
 });
@@ -58,9 +62,14 @@ inboundRouter.post(
             date: b.date ? new Date(b.date) : undefined,
             note: b.note,
             supplierId: b.supplierId ?? null,
+            createdById: req.user.id,
             lines: { create: b.lines.map((l) => ({ itemId: l.itemId, qty: l.qty })) },
           },
-          include: { supplier: true, lines: { include: { item: true } } },
+          include: {
+            supplier: true,
+            createdBy: { select: { id: true, name: true, role: true } },
+            lines: { include: { item: true } },
+          },
         });
 
         for (const ln of b.lines) {

@@ -17,6 +17,7 @@ loansRouter.post(
     z.object({
       body: z.object({
         note: z.string().optional(),
+        dueAt: z.string().datetime().optional(),
         lines: z
           .array(
             z.object({
@@ -35,6 +36,7 @@ loansRouter.post(
         data: {
           requesterId: req.user.id,
           note: b.note,
+          dueAt: b.dueAt ? new Date(b.dueAt) : undefined,
           lines: { create: b.lines.map((l) => ({ itemId: l.itemId, qty: l.qty })) },
         },
         include: { lines: { include: { item: true } } },

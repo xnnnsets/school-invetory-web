@@ -27,6 +27,11 @@ authRouter.post(
       const ok = await verifyPassword(password, user.passwordHash);
       if (!ok) throw new HttpError(401, "Email/password salah");
 
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+
       const token = signAccessToken({ sub: user.id, role: user.role });
       res.json({
         accessToken: token,
