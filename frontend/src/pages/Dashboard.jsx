@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { Boxes, Download, TrendingUp, TriangleAlert } from "lucide-react";
+import { Bell, Boxes, Download, FileText, Handshake, TrendingUp, TriangleAlert } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
 
@@ -45,6 +45,9 @@ function Panel({ title, children }) {
 export default function Dashboard() {
   const user = getUser();
   const isGuru = user?.role === "GURU";
+  const isAdmin = user?.role === "ADMIN";
+  const isKepsek = user?.role === "KEPALA_SEKOLAH";
+  const isTU = user?.role === "PETUGAS_TU";
 
   const [summary, setSummary] = useState(null);
   const [trends, setTrends] = useState([]);
@@ -53,6 +56,7 @@ export default function Dashboard() {
   const [items, setItems] = useState([]);
   const [loans, setLoans] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [notificationsMeta, setNotificationsMeta] = useState({ unread: 0 });
   const [error, setError] = useState("");
 
   async function load() {
@@ -65,18 +69,20 @@ export default function Dashboard() {
         return;
       }
 
-      const [s, t, b, a, i] = await Promise.all([
+      const [s, t, b, a, i, n] = await Promise.all([
         apiFetch("/api/dashboard/summary"),
         apiFetch("/api/dashboard/trends"),
         apiFetch("/api/dashboard/stock-by-category"),
         apiFetch("/api/dashboard/recent-activity"),
         apiFetch("/api/items"),
+        isKepsek ? apiFetch("/api/notifications") : Promise.resolve({ meta: { unread: 0 }, data: [] }),
       ]);
       setSummary(s.data);
       setTrends(t.data);
       setStockByCategory(b.data);
       setActivity(a.data);
       setItems(i.data);
+      setNotificationsMeta({ unread: n?.meta?.unread || 0 });
     } catch (e) {
       setError(e?.message || "Gagal memuat dashboard");
     }
@@ -175,33 +181,85 @@ export default function Dashboard() {
     ],
   };
 
+  const headerSubtitle = isAdmin
+    ? "Ringkasan inventaris dan aktivitas terkini"
+    : isKepsek
+      ? "Monitoring stok, aktivitas, dan notifikasi"
+      : isTU
+        ? "Ringkasan operasional harian (masuk/keluar, permintaan, peminjaman)"
+        : "Ringkasan inventaris";
+
   return (
     <div className="max-w-6xl">
       <div className="mb-1 text-2xl font-semibold">Dashboard</div>
-      <div className="text-sm text-slate-600">Ringkasan inventaris dan aktivitas terkini</div>
+      <div className="text-sm text-slate-600">{headerSubtitle}</div>
       {error ? <div className="mt-3 text-sm text-rose-700">{error}</div> : null}
 
-      <div className="mt-5 grid md:grid-cols-4 gap-4">
-        <Card icon={Boxes} color="bg-blue-600" value={summary?.totalItems ?? "-"} label="Total Barang" hint="Semua item" />
-        <Card icon={TrendingUp} color="bg-emerald-600" value={summary?.inboundThisMonthQty ?? "-"} label="Barang Masuk" hint="Bulan ini" />
-        <Card icon={Download} color="bg-orange-500" value={summary?.outboundThisMonthQty ?? "-"} label="Barang Keluar" hint="Bulan ini" />
-        <Card
-          icon={TriangleAlert}
-          color="bg-rose-600"
-          value={summary?.lowStockItems ?? "-"}
-          label="Stok Menipis"
-          hint="Perlu restok"
-        />
-      </div>
+      {isTU ? (
+        <div className="mt-5 grid md:grid-cols-4 gap-4">
+          <Card icon={TrendingUp} color="bg-emerald-600" value={summary?.inboundToday ?? "-"} label="Barang Masuk" hint="Hari ini" />
+          <Card icon={Download} color="bg-orange-500" value={summary?.outboundToday ?? "-"} label="Barang Keluar" hint="Hari ini" />
+          <Card icon={FileText} color="bg-amber-500" value={summary?.pendingRequests ?? "-"} label="Permintaan" hint="Menunggu" />
+          <Card icon={Handshake} color="bg-blue-600" value={summary?.pendingLoans ?? "-"} label="Peminjaman" hint="Menunggu" />
+        </div>
+      ) : (
+        <div className="mt-5 grid md:grid-cols-4 gap-4">
+          <Card icon={Boxes} color="bg-blue-600" value={summary?.totalItems ?? "-"} label="Total Barang" hint="Semua item" />
+          <Card icon={TrendingUp} color="bg-emerald-600" value={summary?.inboundThisMonthQty ?? "-"} label="Barang Masuk" hint="Bulan ini" />
+          <Card icon={Download} color="bg-orange-500" value={summary?.outboundThisMonthQty ?? "-"} label="Barang Keluar" hint="Bulan ini" />
+          <Card icon={TriangleAlert} color="bg-rose-600" value={summary?.lowStockItems ?? "-"} label="Stok Menipis" hint="Perlu restok" />
+        </div>
+      )}
 
-      <div className="mt-5 grid lg:grid-cols-2 gap-4">
-        <Panel title="Trend Barang Masuk & Keluar">
-          <Line data={lineData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-        </Panel>
-        <Panel title="Stok per Kategori">
-          <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
-        </Panel>
-      </div>
+      {!isTU ? (
+        <div className="mt-5 grid lg:grid-cols-2 gap-4">
+          <Panel title="Trend Barang Masuk & Keluar">
+            <Line data={lineData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+          </Panel>
+          <Panel title="Stok per Kategori">
+            <Bar data={barData} options={{ responsive: true, plugins: { legend: { display: false } } }} />
+          </Panel>
+        </div>
+      ) : (
+        <div className="mt-5 grid lg:grid-cols-2 gap-4">
+          <Panel title="Stok Menipis (Prioritas)">
+            <div className="space-y-2">
+              {lowStockList.map((it) => (
+                <div key={it.id} className="rounded-xl border border-slate-200 px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">{it.name}</div>
+                    <div className="text-xs text-rose-700">
+                      {it.stock} / min: {it.minStock}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {!lowStockList.length ? <div className="text-sm text-slate-500">Stok aman.</div> : null}
+            </div>
+          </Panel>
+          <Panel title="Aktivitas Terbaru">
+            <div className="space-y-2">
+              {activity.slice(0, 6).map((a, idx) => (
+                <div key={idx} className="rounded-xl border border-slate-200 px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium">
+                      {a.type === "INBOUND"
+                        ? "Barang Masuk"
+                        : a.type === "OUTBOUND"
+                          ? "Barang Keluar"
+                          : a.type === "REQUEST"
+                            ? "Permintaan"
+                            : "Peminjaman"}
+                    </div>
+                    <div className="text-xs text-slate-500">{new Date(a.at).toLocaleString()}</div>
+                  </div>
+                </div>
+              ))}
+              {!activity.length ? <div className="text-sm text-slate-500">Belum ada aktivitas.</div> : null}
+            </div>
+          </Panel>
+        </div>
+      )}
 
       <div className="mt-5 grid lg:grid-cols-2 gap-4">
         <Panel title="Aktivitas Terbaru">
@@ -210,7 +268,13 @@ export default function Dashboard() {
               <div key={idx} className="rounded-xl border border-slate-200 px-3 py-2">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">
-                    {a.type === "INBOUND" ? "Barang Masuk" : a.type === "OUTBOUND" ? "Barang Keluar" : "Peminjaman"}
+                    {a.type === "INBOUND"
+                      ? "Barang Masuk"
+                      : a.type === "OUTBOUND"
+                        ? "Barang Keluar"
+                        : a.type === "REQUEST"
+                          ? "Permintaan"
+                          : "Peminjaman"}
                   </div>
                   <div className="text-xs text-slate-500">{new Date(a.at).toLocaleString()}</div>
                 </div>
@@ -227,7 +291,16 @@ export default function Dashboard() {
           </div>
         </Panel>
 
-        <Panel title="Stok Menipis">
+        <Panel title={isKepsek ? `Notifikasi (Unread: ${notificationsMeta.unread})` : "Stok Menipis"}>
+          {isKepsek ? (
+            <div className="text-sm text-slate-600">
+              Notifikasi terbaru bisa dilihat di menu <span className="font-medium">Notifikasi</span>. Unread saat ini:{" "}
+              <span className="font-semibold text-slate-900">{notificationsMeta.unread}</span>.
+              <div className="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-700">
+                <Bell className="h-4 w-4" /> Cek Notifikasi untuk detail
+              </div>
+            </div>
+          ) : (
           <div className="space-y-2">
             {lowStockList.map((it) => (
               <div key={it.id} className="rounded-xl border border-slate-200 px-3 py-2">
@@ -249,6 +322,7 @@ export default function Dashboard() {
             ))}
             {!lowStockList.length ? <div className="text-sm text-slate-500">Stok aman.</div> : null}
           </div>
+          )}
         </Panel>
       </div>
     </div>

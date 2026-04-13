@@ -21,12 +21,23 @@ function endOfMonth(dt) {
   return new Date(dt.getFullYear(), dt.getMonth() + 1, 0, 23, 59, 59, 999);
 }
 
+function startOfDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 0, 0, 0, 0);
+}
+
+function endOfDay(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 23, 59, 59, 999);
+}
+
 dashboardRouter.get("/summary", async (req, res) => {
   const now = new Date();
   const from = startOfMonth(now);
   const to = endOfMonth(now);
+  const dayFrom = startOfDay(now);
+  const dayTo = endOfDay(now);
 
-  const [totalItems, itemsStock, inboundLines, outboundLines, pendingLoans] = await Promise.all([
+  const [totalItems, itemsStock, inboundLines, outboundLines, pendingLoans, pendingRequests, inboundToday, outboundToday] =
+    await Promise.all([
     prisma.item.count(),
     prisma.item.findMany({ select: { stock: true, minStock: true } }),
     prisma.inboundLine.aggregate({
@@ -38,6 +49,9 @@ dashboardRouter.get("/summary", async (req, res) => {
       _sum: { qty: true },
     }),
     prisma.loan.count({ where: { status: "PENDING" } }),
+    prisma.request.count({ where: { status: "PENDING" } }),
+    prisma.inbound.count({ where: { date: { gte: dayFrom, lte: dayTo } } }),
+    prisma.outbound.count({ where: { date: { gte: dayFrom, lte: dayTo } } }),
   ]);
 
   const lowStockItems = itemsStock.filter((x) => (x.minStock || 0) > 0 && x.stock <= x.minStock).length;
@@ -49,6 +63,9 @@ dashboardRouter.get("/summary", async (req, res) => {
       outboundThisMonthQty: outboundLines._sum.qty || 0,
       lowStockItems,
       pendingLoans,
+      pendingRequests,
+      inboundToday,
+      outboundToday,
     },
   });
 });
@@ -109,7 +126,7 @@ dashboardRouter.get("/stock-by-category", async (req, res) => {
 dashboardRouter.get("/recent-activity", async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 8), 30);
 
-  const [inbounds, outbounds, loans] = await Promise.all([
+  const [inbounds, outbounds, loans, requests] = await Promise.all([
     prisma.inbound.findMany({
       take: limit,
       orderBy: { date: "desc" },
@@ -121,6 +138,11 @@ dashboardRouter.get("/recent-activity", async (req, res) => {
       include: { lines: { include: { item: true } } },
     }),
     prisma.loan.findMany({
+      take: limit,
+      orderBy: { requestedAt: "desc" },
+      include: { lines: { include: { item: true } }, requester: { select: { name: true } } },
+    }),
+    prisma.request.findMany({
       take: limit,
       orderBy: { requestedAt: "desc" },
       include: { lines: { include: { item: true } }, requester: { select: { name: true } } },
@@ -142,6 +164,13 @@ dashboardRouter.get("/recent-activity", async (req, res) => {
     })),
     ...loans.map((x) => ({
       type: "LOAN",
+      at: x.requestedAt,
+      note: x.note,
+      meta: { requesterName: x.requester?.name, status: x.status },
+      items: x.lines.map((l) => ({ name: l.item.name, qty: l.qty })),
+    })),
+    ...requests.map((x) => ({
+      type: "REQUEST",
       at: x.requestedAt,
       note: x.note,
       meta: { requesterName: x.requester?.name, status: x.status },
