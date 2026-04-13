@@ -1,10 +1,12 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Login from "./pages/Login.jsx";
+import AppShell from "./layouts/AppShell.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Items from "./pages/Items.jsx";
 import Loans from "./pages/Loans.jsx";
 import MasterData from "./pages/MasterData.jsx";
 import Transactions from "./pages/Transactions.jsx";
+import Placeholder from "./pages/Placeholder.jsx";
 import { getToken, setOnUnauthorized } from "./lib/api.js";
 import { logout, setRedirectAfterLogin } from "./lib/auth.js";
 import { useEffect } from "react";
@@ -36,42 +38,39 @@ export default function App() {
         path="/"
         element={
           <RequireAuth>
-            <Dashboard />
+            <AppShell />
           </RequireAuth>
         }
-      />
-      <Route
-        path="/master/items"
-        element={
-          <RequireAuth>
-            <Items />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/loans"
-        element={
-          <RequireAuth>
-            <Loans />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/master"
-        element={
-          <RequireAuth>
-            <MasterData />
-          </RequireAuth>
-        }
-      />
-      <Route
-        path="/transactions"
-        element={
-          <RequireAuth>
-            <Transactions />
-          </RequireAuth>
-        }
-      />
+      >
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="users" element={<Placeholder title="Kelola Pengguna" subtitle="Manajemen akun & role." />} />
+
+        {/* Master */}
+        <Route path="items" element={<Items />} />
+        <Route path="categories" element={<Placeholder title="Kategori Barang" subtitle="Kelola kategori barang." />} />
+        <Route path="suppliers" element={<Placeholder title="Data Supplier" subtitle="Kelola supplier." />} />
+        <Route path="school" element={<Placeholder title="Data Sekolah" subtitle="Profil sekolah." />} />
+
+        {/* Transactions */}
+        <Route path="inbound" element={<Transactions />} />
+        <Route path="outbound" element={<Transactions />} />
+
+        {/* Loans/Requests */}
+        <Route path="loans" element={<Loans />} />
+        <Route path="requests" element={<Placeholder title="Ajukan Permintaan" subtitle="Permintaan barang ke TU." />} />
+        <Route path="history" element={<Placeholder title="Riwayat" subtitle="Riwayat permintaan & peminjaman." />} />
+
+        {/* Kepsek */}
+        <Route path="stock-monitoring" element={<Items />} />
+        <Route path="notifications" element={<Placeholder title="Notifikasi" subtitle="Info stok, transaksi, dan permintaan." />} />
+
+        {/* TU */}
+        <Route path="update-stock" element={<MasterData />} />
+
+        {/* Reports */}
+        <Route path="reports" element={<Placeholder title="Laporan" subtitle="Cetak laporan stok, masuk, keluar, peminjaman." />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
